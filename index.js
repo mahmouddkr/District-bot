@@ -13,7 +13,7 @@ app.listen(port, () => {
     console.log(`Web server is listening on port ${port}`);
 });
 
-// إعدادات التذاكر والتاغ (استبدل الآي دي أدناه بآي دي الإدارة أو الرتبة الخاصة بك)
+// إعدادات التذاكر والتاغ (استبدل الآي دي أدناه بآي دي الإدارة أو الرتبة الخاصة بك إن أردت)
 const SUPPORT_ROLE_OR_USER_ID = 'ضع_آي_دي_الشخص_أو_الرتبة_هنا';
 
 // إيدي روم الترحيب الخاص بك
@@ -61,11 +61,9 @@ client.once('ready', async () => {
 client.on('guildMemberAdd', async member => {
     if (member.user.bot) return;
 
-    // التحقق مما إذا تم الترحيب بهذا العضو مسبقاً في الذاكرة لمنع التكرار
     if (welcomedMembers.has(member.id)) return;
     welcomedMembers.add(member.id);
 
-    // إزالة أثر العضو من الذاكرة بعد دقيقة واحدة لكي لا تتسع الذاكرة بلا داعٍ
     setTimeout(() => welcomedMembers.delete(member.id), 60000);
 
     const welcomeChannel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
@@ -81,7 +79,7 @@ client.on('guildMemberAdd', async member => {
 
     try {
         await welcomeChannel.send({ embeds: [welcomeEmbed] });
-    }keypress => {
+    } catch (error) {
         console.error('Error sending welcome message:', error);
     }
 });
