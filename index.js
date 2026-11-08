@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits, SlashCommandBuilder } = require('discord.js');
-const { joinVoiceChannel } = require('@discordjs/voice');
-const express = theRequire = require('express');
+const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
+const express = require('express');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -25,14 +25,19 @@ const client = new Client({
 client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
 
-    // تسجيل أمر /join مباشرة في السيرفرات التي يتواجد فيها البوت
-    const command = new SlashCommandBuilder()
+    // تسجيل الأوامر (/join و /leave)
+    const joinCommand = new SlashCommandBuilder()
         .setName('join')
         .setDescription('يجعل البوت يدخل القناة الصوتية معك');
 
+    const leaveCommand = new SlashCommandBuilder()
+        .setName('leave')
+        .setDescription('يجعل البوت يغادر القناة الصوتية');
+
     try {
-        await client.application.commands.create(command);
-        console.log('Successfully registered /join command.');
+        await client.application.commands.create(joinCommand);
+        await client.application.commands.create(leaveCommand);
+        console.log('Successfully registered /join and /leave commands.');
     } catch (error) {
         console.error(error);
     }
@@ -41,6 +46,7 @@ client.on('ready', async () => {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
+    // أمر /join
     if (interaction.commandName === 'join') {
         const voiceChannel = interaction.member.voice.channel;
         
@@ -60,6 +66,24 @@ client.on('interactionCreate', async interaction => {
             await interaction.reply({ content: 'حدث خطأ أثناء محاولة الانضمام للقناة الصوتية.', ephemeral: true });
         }
     }
+
+    // أمر /leave
+    if (interaction.commandName === 'leave') {
+        const connection = getVoiceConnection(interaction.guild.id);
+
+        if (!connection) {
+            return interaction.reply({ content: 'البوت ليس موجوداً في أي قناة صوتية حالياً!', ephemeral: true });
+        }
+
+        try {
+            connection.destroy();
+            await interaction.reply({ content: 'تم مغادرة القناة الصوتية بنجاح.', ephemeral: false });
+        } catch (error) {
+            console.error(error);
+            await interaction.reply({ content: 'حدث خطأ أثناء محاولة الخروج.', ephemeral: true });
+        }
+    }
 });
 
 client.login(process.env.TOKEN);
+
