@@ -16,7 +16,7 @@ app.listen(port, () => {
 // إعدادات التذاكر والتاغ (استبدل الآي دي أدناه بآي دي الإدارة أو الرتبة الخاصة بك)
 const SUPPORT_ROLE_OR_USER_ID = 'ضع_آي_دي_الشخص_أو_الرتبة_هنا';
 
-// إيدي روم الترحيب الذي أرسلته
+// إيدي روم الترحيب الخاص بك
 const WELCOME_CHANNEL_ID = '1560689193733324910';
 
 const client = new Client({
@@ -25,9 +25,12 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildMembers // ضروري جداً لكي يعمل نظام الترحيب عند دخول الأعضاء
+        GatewayIntentBits.GuildMembers
     ]
 });
+
+// مجموعة لتخزين الأعضاء الذين تم ترحيبهم لمنع التكرار نهائياً
+const welcomedMembers = new Set();
 
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -54,8 +57,17 @@ client.once('ready', async () => {
     }
 });
 
-// 1. نظام الترحيب بالأعضاء الجدد (Welcome System) بالصيغة التي طلبتها تماماً
+// 1. نظام الترحيب مع حماية قوية ضد التكرار
 client.on('guildMemberAdd', async member => {
+    if (member.user.bot) return;
+
+    // التحقق مما إذا تم الترحيب بهذا العضو مسبقاً في الذاكرة لمنع التكرار
+    if (welcomedMembers.has(member.id)) return;
+    welcomedMembers.add(member.id);
+
+    // إزالة أثر العضو من الذاكرة بعد دقيقة واحدة لكي لا تتسع الذاكرة بلا داعٍ
+    setTimeout(() => welcomedMembers.delete(member.id), 60000);
+
     const welcomeChannel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
     if (!welcomeChannel) return;
 
@@ -69,7 +81,7 @@ client.on('guildMemberAdd', async member => {
 
     try {
         await welcomeChannel.send({ embeds: [welcomeEmbed] });
-    } catch (error) {
+    }keypress => {
         console.error('Error sending welcome message:', error);
     }
 });
