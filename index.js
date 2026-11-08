@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, SlashCommandBuilder, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, SlashCommandBuilder } = require('discord.js');
 const { joinVoiceChannel } = require('@discordjs/voice');
 const express = require('express');
 
@@ -22,27 +22,8 @@ const client = new Client({
     ]
 });
 
-client.on('ready', async () => {
+client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
-
-    // تسجيل أمر /join تلقائياً عند تشغيل البوت
-    const commands = [
-        new SlashCommandBuilder()
-            .setName('join')
-            .setDescription('يجعل البوت يدخل القناة الصوتية معك')
-    ];
-
-    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
-
-    try {
-        await rest.put(
-            Routes.applicationCommands(client.user.id),
-            { body: commands },
-        );
-        console.log('Successfully registered application commands.');
-    } catch (error) {
-        console.error(error);
-    }
 });
 
 client.on('interactionCreate', async interaction => {
@@ -70,3 +51,4 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(process.env.TOKEN);
+
