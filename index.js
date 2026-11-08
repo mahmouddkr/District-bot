@@ -13,14 +13,14 @@ app.listen(port, () => {
     console.log(`Web server is listening on port ${port}`);
 });
 
-// إعدادات التذاكر والتاغ (استبدل الآي دي أدناه بآي دي الإدارة أو الرتبة الخاصة بك إن أردت)
+// إعدادات التذاكر والتاغ
 const SUPPORT_ROLE_OR_USER_ID = 'ضع_آي_دي_الشخص_أو_الرتبة_هنا';
 
-// إيدي روم الترحيب (Welcome)
+// آيديات القنوات
 const WELCOME_CHANNEL_ID = '1560689193733324910';
-
-// إيدي روم المغادرة (Leave)
 const LEAVE_CHANNEL_ID = '1569090865551638709';
+const LOG_CHANNEL_ID = '1569093925266784286';       // قناة اللوج العام (دخول، خروج، حظر، فويس، رسائل)
+const ROLES_LOG_CHANNEL_ID = '1569094610217861171'; // قناة لوغ الرتب فقط
 
 const client = new Client({
     intents: [
@@ -28,7 +28,8 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildMembers // ضروري جداً لعمل الترحيب والمغادرة
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildModeration
     ]
 });
 
@@ -61,10 +62,9 @@ client.once('ready', async () => {
     }
 });
 
-// 1. نظام الترحيب بالأعضاء الجدد (مع حماية ضد التكرار)
+// 1. الترحيب
 client.on('guildMemberAdd', async member => {
     if (member.user.bot) return;
-
     if (welcomedMembers.has(member.id)) return;
     welcomedMembers.add(member.id);
     setTimeout(() => welcomedMembers.delete(member.id), 60000);
@@ -87,33 +87,141 @@ client.on('guildMemberAdd', async member => {
     }
 });
 
-// 2. نظام المغادرة (Leave System)
+// 2. المغادرة (تسجيل في اللوج العام أيضاً)
 client.on('guildMemberRemove', async member => {
     if (member.user.bot) return;
-
     if (leftMembers.has(member.id)) return;
     leftMembers.add(member.id);
     setTimeout(() => leftMembers.delete(member.id), 60000);
 
     const leaveChannel = member.guild.channels.cache.get(LEAVE_CHANNEL_ID);
-    if (!leaveChannel) return;
+    if (leaveChannel) {
+        const leaveEmbed = new EmbedBuilder()
+            .setTitle('👋 𝐆𝐎𝐎𝐃𝐁𝐘𝐄 𝐅𝐑𝐎𝐌 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓!')
+            .setDescription(`👋・Goodbye ${member} ! We hope to see you again soon. 💙`)
+            .setColor('#ff3333')
+            .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+            .setFooter({ text: `Member Left | District Community`, iconURL: member.guild.iconURL() });
 
-    const leaveEmbed = new EmbedBuilder()
-        .setTitle('👋 𝐆𝐎𝐎𝐃𝐁𝐘𝐄 𝐅𝐑𝐎𝐌 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓!')
-        .setDescription(`👋・Goodbye ${member} ! We hope to see you again soon. 💙`)
-        .setColor('#ff3333')
-        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-        .setFooter({ text: `Member Left | District Community`, iconURL: member.guild.iconURL() });
+        leaveChannel.send({ embeds: [leaveEmbed] }).catch(() => {});
+    }
 
-    try {
-        await leaveChannel.send({ embeds: [leaveEmbed] });
-    } catch (error) {
-        console.error('Error sending leave message:', error);
+    // لوغ المغادرة في القناة العامة
+    const logChannel = member.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (logChannel) {
+        const embed = new EmbedBuilder()
+            .setTitle('🚪 **Member Left / مغادرة عضو**')
+            .setDescription(`**User:** ${member.user.tag} (${member})`)
+            .setColor('#ff3333')
+            .setTimestamp();
+        logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 });
 
+// 3. الحظر (Ban Log)
+client.on('guildBanAdd', async ban => {
+    const logChannel = ban.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const embed = new EmbedBuilder()
+        .setTitle('🔨 **Member Banned / حظر عضو**')
+        .setDescription(`**User:** ${ban.user.tag}\n**Reason:** ${ban.reason || 'No reason provided'}`)
+        .setColor('#8b0000')
+        .setTimestamp();
+
+    logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
+// 4. مراقبة الصوت (VC Disconnect / Move / Join) في اللوج العام
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    const logChannel = oldState.guild.channels.cache.get(LOG_CHANNEL_ID) || newState.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const member = newState.member || oldState.member;
+    if (member.user.bot) return;
+
+    // فصل شخص من الروم الصوتي أو خروجه
+    if (oldState.channelId && !newState.channelId) {
+        const embed = new EmbedBuilder()
+            .setTitle('🔇 **Voice Disconnect / خروج من الفويس**')
+            .setDescription(`**User:** ${member} (${member.user.tag})\n**Left Channel:** ${oldState.channel.name}`)
+            .setColor('#ff9900')
+            .setTimestamp();
+        logChannel.send({ embeds: [embed] }).catch(() => {});
+    } 
+    // انضمام للفويس
+    else if (!oldState.channelId && newState.channelId) {
+        const embed = new EmbedBuilder()
+            .setTitle('🔊 **Voice Join / انضمام للفويس**')
+            .setDescription(`**User:** ${member} (${member.user.tag})\n**Joined Channel:** ${newState.channel.name}`)
+            .setColor('#00ccff')
+            .setTimestamp();
+        logChannel.send({ embeds: [embed] }).catch(() => {});
+    }
+});
+
+// 5. لوغ الرتب (إعطاء / إزالة رول) في قناة الرتب المخصصة
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+    const logChannel = newMember.guild.channels.cache.get(ROLES_LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
+    const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
+
+    if (addedRoles.size > 0) {
+        for (const role of addedRoles.values()) {
+            const embed = new EmbedBuilder()
+                .setTitle('➕ **Role Added / منح رتبة**')
+                .setDescription(`**User:** ${newMember}\n**Role:** ${role.name}`)
+                .setColor('#00ff00')
+                .setTimestamp();
+            logChannel.send({ embeds: [embed] }).catch(() => {});
+        }
+    }
+
+    if (removedRoles.size > 0) {
+        for (const role of removedRoles.values()) {
+            const embed = new EmbedBuilder()
+                .setTitle('➖ **Role Removed / إزالة رتبة**')
+                .setDescription(`**User:** ${newMember}\n**Role:** ${role.name}`)
+                .setColor('#ff0000')
+                .setTimestamp();
+            logChannel.send({ embeds: [embed] }).catch(() => {});
+        }
+    }
+});
+
+// 6. حذف وتعديل الرسائل (في اللوج العام)
+client.on('messageDelete', async message => {
+    if (!message.guild || message.author?.bot) return;
+    const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const logEmbed = new EmbedBuilder()
+        .setTitle('🗑️ **Message Deleted / حذف رسالة**')
+        .setDescription(`**Author:** ${message.author}\n**Channel:** ${message.channel}\n**Content:** \`${message.content || 'None / رسالة فارغة'}\``)
+        .setColor('#ff0000')
+        .setTimestamp();
+
+    logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+});
+
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+    if (!oldMessage.guild || oldMessage.author?.bot || oldMessage.content === newMessage.content) return;
+    const logChannel = oldMessage.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const logEmbed = new EmbedBuilder()
+        .setTitle('✏️ **Message Edited / تعديل رسالة**')
+        .setDescription(`**Author:** ${oldMessage.author}\n**Channel:** ${oldMessage.channel}\n\n**Before:** \`${oldMessage.content}\`\n**After:** \`${newMessage.content}\``)
+        .setColor('#ffa500')
+        .setTimestamp();
+
+    logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+});
+
+// 7. الأوامر والتذاكر (Join, Leave VC, Ticket)
 client.on('interactionCreate', async interaction => {
-    // 3. التعامل مع الأوامر (/join, /leave, /ticket)
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
 
@@ -160,35 +268,19 @@ client.on('interactionCreate', async interaction => {
                 .setCustomId('ticket_select_menu')
                 .setPlaceholder('اختر خيار التذكرة')
                 .addOptions([
-                    {
-                        label: 'NEED HELP',
-                        description: 'تحتاج مساعدة - Need Help ?',
-                        value: 'help_ticket',
-                        emoji: '❓'
-                    },
-                    {
-                        label: 'REPORTS',
-                        description: 'إبلاغ عن شخص - Report a Member',
-                        value: 'report_ticket',
-                        emoji: '🚨'
-                    }
+                    { label: 'NEED HELP', description: 'تحتاج مساعدة', value: 'help_ticket', emoji: '❓' },
+                    { label: 'REPORTS', description: 'إبلاغ عن شخص', value: 'report_ticket', emoji: '🚨' }
                 ]);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
-
-            await interaction.reply({
-                embeds: [ticketEmbed],
-                components: [row]
-            });
+            await interaction.reply({ embeds: [ticketEmbed], components: [row] });
         }
     }
 
-    // 4. نظام التذاكر بالقائمة المنسدلة (Select Menu)
     if (interaction.isStringSelectMenu()) {
         if (interaction.customId === 'ticket_select_menu') {
             const { guild, member, values } = interaction;
             const selectedValue = values[0];
-            
             const ticketType = selectedValue === 'help_ticket' ? 'help' : 'report';
             const channelName = `ticket-${ticketType}-${member.user.username}`;
 
@@ -226,16 +318,7 @@ client.on('interactionCreate', async interaction => {
                         .setStyle(ButtonStyle.Danger)
                 );
 
-                let pingContent = `مرحباً بك ${member}!\nتم فتح التذكرة بنجاح.`;
-                if (SUPPORT_ROLE_OR_USER_ID !== 'ضع_آي_دي_الشخص_أو_الرتبة_هنا') {
-                    pingContent += `\nتم استدعاء المسؤول: <@&${SUPPORT_ROLE_OR_USER_ID}> (أو <@${SUPPORT_ROLE_OR_USER_ID}>)`;
-                }
-
-                await ticketChannel.send({
-                    content: pingContent,
-                    components: [closeRow]
-                });
-
+                await ticketChannel.send({ content: `مرحباً بك ${member}!\nتم فتح التذكرة بنجاح.`, components: [closeRow] });
                 await interaction.editReply({ content: `تم إنشاء تذكرتك بنجاح: ${ticketChannel}` });
             } catch (error) {
                 console.error(error);
@@ -244,7 +327,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // 5. زر إغلاق التذكرة
     if (interaction.isButton()) {
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: 'سيتم حذف التذكرة خلال 5 ثوانٍ...' });
