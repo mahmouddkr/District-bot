@@ -13,11 +13,11 @@ app.listen(port, () => {
     console.log(`Web server is listening on port ${port}`);
 });
 
-// إعدادات التذاكر والتاغ (ضع آي دي الإدارة أو الرتبة هنا)
+// إعدادات التذاكر والتاغ (استبدل الآي دي أدناه بآي دي الإدارة أو الرتبة الخاصة بك)
 const SUPPORT_ROLE_OR_USER_ID = 'ضع_آي_دي_الشخص_أو_الرتبة_هنا';
 
-// ضع هنا ID روم الترحيب في سيرفرك
-const WELCOME_CHANNEL_ID = 'ضع_آي_دي_روم_الترحيب_هنا';
+// إيدي روم الترحيب الذي أرسلته
+const WELCOME_CHANNEL_ID = '1560689193733324910';
 
 const client = new Client({
     intents: [
@@ -54,10 +54,8 @@ client.once('ready', async () => {
     }
 });
 
-// 1. نظام الترحيب بالأعضاء الجدد (Welcome System) بالنص الذي طلبته تماماً
+// 1. نظام الترحيب بالأعضاء الجدد (Welcome System) بالصيغة التي طلبتها تماماً
 client.on('guildMemberAdd', async member => {
-    if (WELCOME_CHANNEL_ID === 'ضع_آي_دي_روم_الترحيب_هنا') return;
-
     const welcomeChannel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
     if (!welcomeChannel) return;
 
@@ -224,4 +222,3 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(process.env.TOKEN);
-
