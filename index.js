@@ -13,15 +13,19 @@ app.listen(port, () => {
     console.log(`Web server is listening on port ${port}`);
 });
 
-// ضع هنا الـ ID الخاص بالشخص أو برتبة الإدارة لكي يتم عمل تاغ له عند فتح التذكرة
+// إعدادات التذاكر والتاغ (ضع آي دي الإدارة أو الرتبة هنا)
 const SUPPORT_ROLE_OR_USER_ID = 'ضع_آي_دي_الشخص_أو_الرتبة_هنا';
+
+// ضع هنا ID روم الترحيب في سيرفرك
+const WELCOME_CHANNEL_ID = 'ضع_آي_دي_روم_الترحيب_هنا';
 
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildVoiceStates
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMembers // ضروري جداً لكي يعمل نظام الترحيب عند دخول الأعضاء
     ]
 });
 
@@ -50,8 +54,30 @@ client.once('ready', async () => {
     }
 });
 
+// 1. نظام الترحيب بالأعضاء الجدد (Welcome System) بالنص الذي طلبته تماماً
+client.on('guildMemberAdd', async member => {
+    if (WELCOME_CHANNEL_ID === 'ضع_آي_دي_روم_الترحيب_هنا') return;
+
+    const welcomeChannel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+    if (!welcomeChannel) return;
+
+    const welcomeEmbed = new EmbedBuilder()
+        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓! 🎮')
+        .setDescription(`👋 Welcome ${member}!\n\n🔥 Bienvenue dans notre communauté !\n🎮 Choisis tes jeux et partage tes meilleurs moments avec nous.\n\n❤️ مرحبًا بك في عائلة District!\n✨ هنا تبدأ المتعة، الصداقة والتحديات. نتمنى لك إقامة ممتعة معنا! \n🏆`)
+        .setColor('#00ffcc')
+        .setImage('https://cdn.discordapp.com/attachments/1528436682536259850/1569074974118125730/IMG_1065.jpg?ex=6af22271&is=6af0d0f1&hm=e3dd17b92e50e2a60a7a80ddcec5f855ee4b260bf8890d9e118a5bc531538d4d&')
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+        .setFooter({ text: `Member #${member.guild.memberCount} | District Community`, iconURL: member.guild.iconURL() });
+
+    try {
+        await welcomeChannel.send({ embeds: [welcomeEmbed] });
+    } catch (error) {
+        console.error('Error sending welcome message:', error);
+    }
+});
+
 client.on('interactionCreate', async interaction => {
-    // 1. التعامل مع الأوامر (/join, /leave, /ticket)
+    // 2. التعامل مع الأوامر (/join, /leave, /ticket)
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
 
@@ -87,7 +113,6 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // أمر التذاكر مع القائمة المنسدلة (Select Menu) والصورة
         if (commandName === 'ticket') {
             const ticketEmbed = new EmbedBuilder()
                 .setTitle('الدعم الفني - District')
@@ -122,7 +147,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // 2. التعامل مع اختيار القائمة المنسدلة (Select Menu Interaction)
+    // 3. نظام التذاكر بالقائمة المنسدلة (Select Menu)
     if (interaction.isStringSelectMenu()) {
         if (interaction.customId === 'ticket_select_menu') {
             const { guild, member, values } = interaction;
@@ -183,7 +208,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // 3. التعامل مع زر إغلاق التذكرة
+    // 4. زر إغلاق التذكرة
     if (interaction.isButton()) {
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: 'سيتم حذف التذكرة خلال 5 ثوانٍ...' });
@@ -199,3 +224,4 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(process.env.TOKEN);
+
