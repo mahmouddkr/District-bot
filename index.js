@@ -16,8 +16,11 @@ app.listen(port, () => {
 // إعدادات التذاكر والتاغ (استبدل الآي دي أدناه بآي دي الإدارة أو الرتبة الخاصة بك إن أردت)
 const SUPPORT_ROLE_OR_USER_ID = 'ضع_آي_دي_الشخص_أو_الرتبة_هنا';
 
-// إيدي روم الترحيب الخاص بك
+// إيدي روم الترحيب (Welcome)
 const WELCOME_CHANNEL_ID = '1560689193733324910';
+
+// إيدي روم المغادرة (Leave)
+const LEAVE_CHANNEL_ID = '1569090865551638709';
 
 const client = new Client({
     intents: [
@@ -25,12 +28,13 @@ const client = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildMembers
+        GatewayIntentBits.GuildMembers // ضروري جداً لعمل الترحيب والمغادرة
     ]
 });
 
-// مجموعة لتخزين الأعضاء الذين تم ترحيبهم لمنع التكرار نهائياً
+// مجموعات لمنع تكرار الرسائل
 const welcomedMembers = new Set();
+const leftMembers = new Set();
 
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -57,13 +61,12 @@ client.once('ready', async () => {
     }
 });
 
-// 1. نظام الترحيب مع حماية قوية ضد التكرار
+// 1. نظام الترحيب بالأعضاء الجدد (مع حماية ضد التكرار)
 client.on('guildMemberAdd', async member => {
     if (member.user.bot) return;
 
     if (welcomedMembers.has(member.id)) return;
     welcomedMembers.add(member.id);
-
     setTimeout(() => welcomedMembers.delete(member.id), 60000);
 
     const welcomeChannel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
@@ -84,8 +87,33 @@ client.on('guildMemberAdd', async member => {
     }
 });
 
+// 2. نظام المغادرة (Leave System)
+client.on('guildMemberRemove', async member => {
+    if (member.user.bot) return;
+
+    if (leftMembers.has(member.id)) return;
+    leftMembers.add(member.id);
+    setTimeout(() => leftMembers.delete(member.id), 60000);
+
+    const leaveChannel = member.guild.channels.cache.get(LEAVE_CHANNEL_ID);
+    if (!leaveChannel) return;
+
+    const leaveEmbed = new EmbedBuilder()
+        .setTitle('👋 𝐆𝐎𝐎𝐃𝐁𝐘𝐄 𝐅𝐑𝐎𝐌 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓!')
+        .setDescription(`👋・Goodbye ${member} ! We hope to see you again soon. 💙`)
+        .setColor('#ff3333')
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+        .setFooter({ text: `Member Left | District Community`, iconURL: member.guild.iconURL() });
+
+    try {
+        await leaveChannel.send({ embeds: [leaveEmbed] });
+    } catch (error) {
+        console.error('Error sending leave message:', error);
+    }
+});
+
 client.on('interactionCreate', async interaction => {
-    // 2. التعامل مع الأوامر (/join, /leave, /ticket)
+    // 3. التعامل مع الأوامر (/join, /leave, /ticket)
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
 
@@ -155,7 +183,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // 3. نظام التذاكر بالقائمة المنسدلة (Select Menu)
+    // 4. نظام التذاكر بالقائمة المنسدلة (Select Menu)
     if (interaction.isStringSelectMenu()) {
         if (interaction.customId === 'ticket_select_menu') {
             const { guild, member, values } = interaction;
@@ -216,7 +244,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // 4. زر إغلاق التذكرة
+    // 5. زر إغلاق التذكرة
     if (interaction.isButton()) {
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: 'سيتم حذف التذكرة خلال 5 ثوانٍ...' });
