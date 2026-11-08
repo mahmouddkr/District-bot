@@ -1,6 +1,7 @@
 {
   "name": "district-bot",
   "version": "1.0.0",
+  "description": "Discord Bot 24/7",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
