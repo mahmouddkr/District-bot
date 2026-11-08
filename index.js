@@ -1,16 +1,5 @@
 const { Client, GatewayIntentBits, SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const express = require('express');
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-    res.send('District Bot is alive and running 24/7!');
-});
-
-app.listen(port, () => {
-    console.log(`Web server is listening on port ${port}`);
-});
+const { joinVoiceConnection, getVoiceConnection } = require('@discordjs/voice');
 
 // آي دي الرومات الخاصة بك بدقة
 const WELCOME_CHANNEL_ID = '1560689193733324910';
@@ -39,8 +28,8 @@ const messageLogCooldown = new Set();
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}! District System is online 24/7.`);
 
-    const joinCommand = new SlashCommandBuilder().setName('join').setDescription('تسجيل الانضمام للنظام');
-    const leaveCommand = new SlashCommandBuilder().setName('leave').setDescription('تسجيل المغادرة من النظام');
+    const joinCommand = new SlashCommandBuilder().setName('join').setDescription('يدخل البوت إلى قناتك الصوتية');
+    const leaveCommand = new SlashCommandBuilder().setName('leave').setDescription('يخرج البوت من القناة الصوتية');
     const ticketCommand = new SlashCommandBuilder().setName('ticket').setDescription('إرسال لوحة نظام التذاكر والدعم الفني');
 
     try {
@@ -115,4 +104,219 @@ client.on('guildBanAdd', async ban => {
 
     const embed = new EmbedBuilder()
         .setTitle('🔨 **Member Banned / حظر عضو**')
-        .setDescription(`**User:** ${ban.user.tag}\n**Reason:** ${ban.reason || 'No
+        .setDescription(`**User:** ${ban.user.tag}\n**Reason:** ${ban.reason || 'No reason provided'}`)
+        .setColor('#8b0000')
+        .setTimestamp();
+
+    logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
+// 4. مراقبة الصوت - Voice Join & Disconnect
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    const logChannel = oldState.guild.channels.cache.get(LOG_CHANNEL_ID) || newState.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const member = newState.member || oldState.member;
+    if (!member || member.user.bot) return;
+
+    const cooldownKey = `${member.id}-${oldState.channelId}-${newState.channelId}`;
+    if (voiceCooldown.has(cooldownKey)) return;
+    voiceCooldown.add(cooldownKey);
+    setTimeout(() => voiceCooldown.delete(cooldownKey), 5000);
+
+    if (oldState.channelId && !newState.channelId) {
+        const embed = new EmbedBuilder()
+            .setTitle('🔇 **Voice Disconnect / خروج من الفويس**')
+            .setDescription(`**User:** ${member} (${member.user.tag})\n**Left Channel:** ${oldState.channel?.name || 'Unknown'}`)
+            .setColor('#ff9900')
+            .setTimestamp();
+        logChannel.send({ embeds: [embed] }).catch(() => {});
+    } else if (!oldState.channelId && newState.channelId) {
+        const embed = new EmbedBuilder()
+            .setTitle('🔊 **Voice Join / انضمام للفويس**')
+            .setDescription(`**User:** ${member} (${member.user.tag})\n**Joined Channel:** ${newState.channel?.name || 'Unknown'}`)
+            .setColor('#00ccff')
+            .setTimestamp();
+        logChannel.send({ embeds: [embed] }).catch(() => {});
+    }
+});
+
+// 5. لوغ الرتب - Roles Log
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+    const logChannel = newMember.guild.channels.cache.get(ROLES_LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
+    const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
+
+    if (addedRoles.size > 0) {
+        for (const role of addedRoles.values()) {
+            const rKey = `add-${newMember.id}-${role.id}`;
+            if (roleCooldown.has(rKey)) continue;
+            roleCooldown.add(rKey);
+            setTimeout(() => roleCooldown.delete(rKey), 5000);
+
+            const embed = new EmbedBuilder()
+                .setTitle('➕ **Role Added / منح رتبة**')
+                .setDescription(`**User:** ${newMember}\n**Role:** ${role.name}`)
+                .setColor('#00ff00')
+                .setTimestamp();
+            logChannel.send({ embeds: [embed] }).catch(() => {});
+        }
+    }
+
+    if (removedRoles.size > 0) {
+        for (const role of removedRoles.values()) {
+            const rKey = `rem-${newMember.id}-${role.id}`;
+            if (roleCooldown.has(rKey)) continue;
+            roleCooldown.add(rKey);
+            setTimeout(() => roleCooldown.delete(rKey), 5000);
+
+            const embed = new EmbedBuilder()
+                .setTitle('➖ **Role Removed / إزالة رتبة**')
+                .setDescription(`**User:** ${newMember}\n**Role:** ${role.name}`)
+                .setColor('#ff0000')
+                .setTimestamp();
+            logChannel.send({ embeds: [embed] }).catch(() => {});
+        }
+    }
+});
+
+// 6. حذف وتعديل الرسائل
+client.on('messageDelete', async message => {
+    if (!message.guild || message.author?.bot) return;
+    const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const mKey = `del-${message.id}`;
+    if (messageLogCooldown.has(mKey)) return;
+    messageLogCooldown.add(mKey);
+    setTimeout(() => messageLogCooldown.delete(mKey), 5000);
+
+    const logEmbed = new EmbedBuilder()
+        .setTitle('🗑️ **Message Deleted / حذف رسالة**')
+        .setDescription(`**Author:** ${message.author}\n**Channel:** ${message.channel}\n**Content:** \`${message.content || 'None / رسالة فارغة'}\``)
+        .setColor('#ff0000')
+        .setTimestamp();
+
+    logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+});
+
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+    if (!oldMessage.guild || oldMessage.author?.bot || oldMessage.content === newMessage.content) return;
+    const logChannel = oldMessage.guild.channels.cache.get(LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const mKey = `edit-${newMessage.id}`;
+    if (messageLogCooldown.has(mKey)) return;
+    messageLogCooldown.add(mKey);
+    setTimeout(() => messageLogCooldown.delete(mKey), 5000);
+
+    const logEmbed = new EmbedBuilder()
+        .setTitle('✏️ **Message Edited / تعديل رسالة**')
+        .setDescription(`**Author:** ${oldMessage.author}\n**Channel:** ${oldMessage.channel}\n\n**Before:** \`${oldMessage.content}\`\n**After:** \`${newMessage.content}\``)
+        .setColor('#ffa500')
+        .setTimestamp();
+
+    logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+});
+
+// 7. الأوامر والتذاكر المنظمة (مع تفعيل الصوت لـ /join و /leave)
+client.on('interactionCreate', async interaction => {
+    if (interaction.isChatInputCommand()) {
+        const { commandName } = interaction;
+
+        if (commandName === 'join') {
+            const voiceChannel = interaction.member.voice.channel;
+            if (!voiceChannel) return interaction.reply({ content: '❌ يجب أن تكون في قناة صوتية أولاً!', ephemeral: true });
+            
+            try {
+                joinVoiceConnection({
+                    channelId: voiceChannel.id,
+                    guildId: interaction.guild.id,
+                    adapterCreator: interaction.guild.voiceAdapterCreator,
+                });
+                await interaction.reply({ content: `✅ تم الانضمام إلى القناة الصوتية: **${voiceChannel.name}** بنجاح!`, ephemeral: true });
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: 'حدث خطأ أثناء محاولة الانضمام.', ephemeral: true });
+            }
+        }
+
+        if (commandName === 'leave') {
+            const connection = getVoiceConnection(interaction.guild.id);
+            if (!connection) return interaction.reply({ content: '❌ البوت ليس متصلاً بأي قناة صوتية حالياً!', ephemeral: true });
+            
+            try {
+                connection.destroy();
+                await interaction.reply({ content: '🚪 تم إخراج البوت من القناة الصوتية بنجاح.', ephemeral: true });
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: 'حدث خطأ أثناء محاولة المغادرة.', ephemeral: true });
+            }
+        }
+
+        if (commandName === 'ticket') {
+            const ticketEmbed = new EmbedBuilder()
+                .setTitle('الدعم الفني - District')
+                .setDescription(
+                    'أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n' +
+                    '❓ **NEED HELP / الاستفسارات**\n' +
+                    'للمساعدة العامة والأوامر وقوانين السيرفر.\n\n' +
+                    '🚨 **REPORTS / الإبلاغات**\n' +
+                    'للإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n' +
+                    '📌 **يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.**'
+                )
+                .setColor('#0099ff');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('ticket_select_menu')
+                .setPlaceholder('اختر خيار التذكرة')
+                .addOptions([
+                    { label: 'NEED HELP', description: 'للمساعدة العامة والاستفسارات', value: 'help_ticket', emoji: '❓' },
+                    { label: 'REPORTS', description: 'للإبلاغ عن المخالفات', value: 'report_ticket', emoji: '🚨' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.reply({ embeds: [ticketEmbed], components: [row] });
+        }
+    }
+
+    if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_select_menu') {
+        const { guild, member, values } = interaction;
+        const ticketType = values[0] === 'help_ticket' ? 'help' : 'report';
+        const channelName = `ticket-${ticketType}-${member.user.username.toLowerCase()}`;
+
+        const existingChannel = guild.channels.cache.find(c => c.name === channelName);
+        if (existingChannel) return interaction.reply({ content: `لديك تذكرة مفتوحة بالفعل: ${existingChannel}`, ephemeral: true });
+
+        await interaction.deferReply({ ephemeral: true });
+        try {
+            const ticketChannel = await guild.channels.create({
+                name: channelName,
+                type: ChannelType.GuildText,
+                permissionOverwrites: [
+                    { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+                    { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+                    { id: client.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+                ],
+            });
+
+            const closeRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق التذكرة 🔒').setStyle(ButtonStyle.Danger)
+            );
+
+            await ticketChannel.send({ content: `مرحباً بك ${member}، فريق الإدارة سيرد عليك قريباً.`, components: [closeRow] });
+            await interaction.editReply({ content: `تم إنشاء تذكرتك بنجاح: ${ticketChannel}` });
+        } catch (error) {
+            await interaction.editReply({ content: 'حدث خطأ أثناء إنشاء التذكرة.' });
+        }
+    }
+
+    if (interaction.isButton() && interaction.customId === 'close_ticket') {
+        await interaction.reply({ content: 'سيتم حذف التذكرة خلال 5 ثوانٍ...' });
+        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+    }
+});
+
+client.login(process.env.TOKEN);
