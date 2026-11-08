@@ -1,4 +1,16 @@
 const { Client, GatewayIntentBits } = require('discord.js');
+const express = require('express');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('District Bot is alive and running 24/7!');
+});
+
+app.listen(port, () => {
+    console.log(`Web server is listening on port ${port}`);
+});
 
 const client = new Client({
     intents: [
@@ -12,12 +24,6 @@ client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on('interactionCreate', async interaction => {
-    if (!interaction.isButton()) return;
-    if (interaction.customId === 'primary') {
-        await interaction.reply({ content: 'تم بنجاح!', ephemeral: true });
-    }
-});
-
 client.login(process.env.TOKEN);
+
 
