@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 
 const client = new Client({
     intents: [
@@ -15,8 +15,9 @@ client.on('ready', () => {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
     if (interaction.customId === 'primary') {
-        await interaction.reply({ content: 'تم الضغط على الزر بنجاح!', ephemeral: true });
+        await interaction.reply({ content: 'تم بنجاح!', ephemeral: true });
     }
 });
 
-client.login('YOUR_BOT_TOKEN');
+client.login(process.env.TOKEN);
+
