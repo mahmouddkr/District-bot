@@ -1,4 +1,4 @@
-Const { Client, GatewayIntentBits, SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { joinVoiceConnection, getVoiceConnection } = require('@discordjs/voice');
 const express = require('express');
 
@@ -13,8 +13,10 @@ app.listen(port, () => {
     console.log(`Web server is listening on port ${port}`);
 });
 
+// آي دي الرتبة أو الشخص إن أردت استخدامه لاحقاً
 const SUPPORT_ROLE_OR_USER_ID = 'ضع_آي_دي_الشخص_أو_الرتبة_هنا';
 
+// آي دي الرومات الخاصة بك
 const WELCOME_CHANNEL_ID = '1560689193733324910';
 const LEAVE_CHANNEL_ID = '1569090865551638709';
 const LOG_CHANNEL_ID = '1569093925266784286';       
@@ -31,7 +33,7 @@ const client = new Client({
     ]
 });
 
-// مجموعات حماية قوية لمنع التكرار نهائياً
+// مجموعات حماية قوية لمنع التكرار (السبام) نهائياً
 const welcomedMembers = new Set();
 const leftMembers = new Set();
 const voiceCooldown = new Set();
@@ -55,7 +57,7 @@ client.once('ready', async () => {
     }
 });
 
-// 1. الترحيب (مع حماية مضاعفة)
+// 1. الترحيب (Welcome)
 client.on('guildMemberAdd', async member => {
     if (member.user.bot) return;
     if (welcomedMembers.has(member.id)) return;
@@ -80,7 +82,7 @@ client.on('guildMemberAdd', async member => {
     }
 });
 
-// 2. المغادرة
+// 2. المغادرة (Leave & Log)
 client.on('guildMemberRemove', async member => {
     if (member.user.bot) return;
     if (leftMembers.has(member.id)) return;
@@ -110,7 +112,7 @@ client.on('guildMemberRemove', async member => {
     }
 });
 
-// 3. الحظر
+// 3. الحظر (Server Log - Ban)
 client.on('guildBanAdd', async ban => {
     const logChannel = ban.guild.channels.cache.get(LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -124,7 +126,7 @@ client.on('guildBanAdd', async ban => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// 4. مراقبة الصوت (VC) مع كولداون صارم
+// 4. مراقبة الصوت - Voice Join & Disconnect (Server Log)
 client.on('voiceStateUpdate', async (oldState, newState) => {
     const logChannel = oldState.guild.channels.cache.get(LOG_CHANNEL_ID) || newState.guild.channels.cache.get(LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -154,7 +156,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// 5. لوغ الرتب (مع حماية ضد تكرار التنبيه)
+// 5. لوغ الرتب - Roles Log (إضافة وإزالة رتب)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(ROLES_LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -195,7 +197,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     }
 });
 
-// 6. حذف وتعديل الرسائل
+// 6. حذف وتعديل الرسائل (Server Log)
 client.on('messageDelete', async message => {
     if (!message.guild || message.author?.bot) return;
     const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);
@@ -234,7 +236,7 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
     logChannel.send({ embeds: [logEmbed] }).catch(() => {});
 });
 
-// 7. التذاكر والأوامر الصوتية
+// 7. الأوامر والتذاكر (Interaction Create: /join, /leave, /ticket, Select Menu, Close Button)
 client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
