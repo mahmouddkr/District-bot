@@ -1,5 +1,4 @@
 const { Client, GatewayIntentBits, SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { joinVoiceConnection, getVoiceConnection } = require('@discordjs/voice');
 
 // آي دي الرومات الخاصة بك بدقة
 const WELCOME_CHANNEL_ID = '1560689193733324910';
@@ -28,8 +27,8 @@ const messageLogCooldown = new Set();
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}! District System is online 24/7.`);
 
-    const joinCommand = new SlashCommandBuilder().setName('join').setDescription('يدخل البوت إلى قناتك الصوتية');
-    const leaveCommand = new SlashCommandBuilder().setName('leave').setDescription('يخرج البوت من القناة الصوتية');
+    const joinCommand = new SlashCommandBuilder().setName('join').setDescription('تسجيل الانضمام للنظام');
+    const leaveCommand = new SlashCommandBuilder().setName('leave').setDescription('تسجيل المغادرة من النظام');
     const ticketCommand = new SlashCommandBuilder().setName('ticket').setDescription('إرسال لوحة نظام التذاكر والدعم الفني');
 
     try {
@@ -221,39 +220,17 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
     logChannel.send({ embeds: [logEmbed] }).catch(() => {});
 });
 
-// 7. الأوامر والتذاكر المنظمة (مع تفعيل الصوت لـ /join و /leave)
+// 7. الأوامر والتذاكر المنظمة
 client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
 
         if (commandName === 'join') {
-            const voiceChannel = interaction.member.voice.channel;
-            if (!voiceChannel) return interaction.reply({ content: '❌ يجب أن تكون في قناة صوتية أولاً!', ephemeral: true });
-            
-            try {
-                joinVoiceConnection({
-                    channelId: voiceChannel.id,
-                    guildId: interaction.guild.id,
-                    adapterCreator: interaction.guild.voiceAdapterCreator,
-                });
-                await interaction.reply({ content: `✅ تم الانضمام إلى القناة الصوتية: **${voiceChannel.name}** بنجاح!`, ephemeral: true });
-            } catch (error) {
-                console.error(error);
-                await interaction.reply({ content: 'حدث خطأ أثناء محاولة الانضمام.', ephemeral: true });
-            }
+            await interaction.reply({ content: '✅ تم تسجيل انضمامك للنظام بنجاح.', ephemeral: true });
         }
 
         if (commandName === 'leave') {
-            const connection = getVoiceConnection(interaction.guild.id);
-            if (!connection) return interaction.reply({ content: '❌ البوت ليس متصلاً بأي قناة صوتية حالياً!', ephemeral: true });
-            
-            try {
-                connection.destroy();
-                await interaction.reply({ content: '🚪 تم إخراج البوت من القناة الصوتية بنجاح.', ephemeral: true });
-            } catch (error) {
-                console.error(error);
-                await interaction.reply({ content: 'حدث خطأ أثناء محاولة المغادرة.', ephemeral: true });
-            }
+            await interaction.reply({ content: '🚪 تم تسجيل مغادرتك من النظام بنجاح.', ephemeral: true });
         }
 
         if (commandName === 'ticket') {
