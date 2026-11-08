@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, SlashCommandBuilder, REST, Routes } = require('discord.js');
 const { joinVoiceChannel } = require('@discordjs/voice');
 const express = require('express');
 
@@ -22,34 +22,29 @@ const client = new Client({
     ]
 });
 
-// تعريف أمر الـ Slash Command الخاص بـ /join
-const commands = [
-    new SlashCommandBuilder()
-        .setName('join')
-        .setDescription('يجعل البوت يدخل القناة الصوتية التي تتواجد فيها')
-].map(command => command.toJSON());
-
 client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
 
-    // تسجيل الأوامر في سيرفرك مباشرة (تظهر فوراً)
+    // تسجيل أمر /join تلقائياً عند تشغيل البوت
+    const commands = [
+        new SlashCommandBuilder()
+            .setName('join')
+            .setDescription('يجعل البوت يدخل القناة الصوتية معك')
+    ];
+
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+
     try {
-        console.log('Started refreshing application (/) commands.');
-        
-        // تسجيل الأمر في السيرفر الحالي لكي يظهر فوراً
         await rest.put(
             Routes.applicationCommands(client.user.id),
             { body: commands },
         );
-
-        console.log('Successfully reloaded application (/) commands.');
+        console.log('Successfully registered application commands.');
     } catch (error) {
         console.error(error);
     }
 });
 
-// الاستجابة عند استخدام أمر /join
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
