@@ -1,7 +1,7 @@
 {
   "name": "district-bot",
   "version": "1.0.0",
-  "description": "District Discord Bot",
+  "description": "Discord 24/7 Voice Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -9,6 +9,7 @@
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
     "discord.js": "^14.14.1",
-    "express": "^4.19.2"
+    "express": "^4.18.2",
+    "libsodium-wrappers": "^0.7.13"
   }
 }
