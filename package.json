@@ -1,12 +1,6 @@
-{
-  "name": "district-bot",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "discord.js": "^14.14.1",
-    "express": "^4.19.2"
-  }
+"dependencies": {
+  "@discordjs/rest": "^2.2.0",
+  "@discordjs/voice": "^0.16.1",
+  "discord.js": "^14.14.1",
+  "express": "^4.19.2"
 }
