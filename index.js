@@ -18,7 +18,7 @@ app.listen(PORT, () => {
 const WELCOME_CHANNEL_ID = '1560689193733324910';
 const LEAVE_CHANNEL_ID = '1569090865551638709';
 const LOG_CHANNEL_ID = '1569093925266784286';       
-const ROLES_LOG_CHANNEL_ID = '1569094610217861171'; // آي دي روم لوغ الرتب الصحيح
+const ROLES_LOG_CHANNEL_ID = '1569094610217861171'; // آي دي روم لوغ الرتب
 
 const client = new Client({
     intents: [
@@ -154,7 +154,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// 5. لوغ الرتب المحدث بدقة لـ ROLES_LOG_CHANNEL_ID
+// 5. لوغ الرتب (Roles Log)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(ROLES_LOG_CHANNEL_ID);
     if (!logChannel) return;
