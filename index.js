@@ -2,7 +2,7 @@ const { Client, GatewayIntentBits, SlashCommandBuilder, ActionRowBuilder, String
 const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const express = require('express');
 
-// خادم ويب بسيط لبقاء البوت شغال 24/7 على الاستضافات المجانية
+// خادم ويب لبقاء البوت شغال 24/7
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -14,11 +14,12 @@ app.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
 });
 
-// آي دي الرومات الخاصة بك بدقة متناهية
+// الآي دي الخاصة بالرومات والرتب بدقة
 const WELCOME_CHANNEL_ID = '1560689193733324910';
 const LEAVE_CHANNEL_ID = '1569090865551638709';
 const LOG_CHANNEL_ID = '1569093925266784286';       
-const ROLES_LOG_CHANNEL_ID = '1569094610217861171'; // آي دي روم لوغ الرتب
+const ROLES_LOG_CHANNEL_ID = '1569094610217861171';
+const SUPPORT_ROLE_ID = '1561461730545115276'; // رول الدعم الفني
 
 const client = new Client({
     intents: [
@@ -31,7 +32,7 @@ const client = new Client({
     ]
 });
 
-// حماية ضد السبام والتكرار
+// حماية التكرار
 const welcomedMembers = new Set();
 const leftMembers = new Set();
 const voiceCooldown = new Set();
@@ -49,7 +50,7 @@ client.once('ready', async () => {
         await client.application.commands.create(joinCommand);
         await client.application.commands.create(leaveCommand);
         await client.application.commands.create(ticketCommand);
-        console.log('Successfully registered all voice & system commands.');
+        console.log('Successfully registered all commands.');
     } catch (error) {
         console.error(error);
     }
@@ -80,7 +81,7 @@ client.on('guildMemberAdd', async member => {
     }
 });
 
-// 2. المغادرة (Leave & Log)
+// 2. المغادرة واللوغ
 client.on('guildMemberRemove', async member => {
     if (member.user.bot) return;
     if (leftMembers.has(member.id)) return;
@@ -110,7 +111,7 @@ client.on('guildMemberRemove', async member => {
     }
 });
 
-// 3. الحظر (Server Log - Ban)
+// 3. الحظر
 client.on('guildBanAdd', async ban => {
     const logChannel = ban.guild.channels.cache.get(LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -124,7 +125,7 @@ client.on('guildBanAdd', async ban => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// 4. مراقبة الصوت - Voice Join & Disconnect
+// 4. الفويس
 client.on('voiceStateUpdate', async (oldState, newState) => {
     const logChannel = oldState.guild.channels.cache.get(LOG_CHANNEL_ID) || newState.guild.channels.cache.get(LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -154,7 +155,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// 5. لوغ الرتب (Roles Log)
+// 5. لوغ الرتب
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(ROLES_LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -195,7 +196,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     }
 });
 
-// 6. حذف وتعديل الرسائل
+// 6. مراقبة الرسائل
 client.on('messageDelete', async message => {
     if (!message.guild || message.author?.bot) return;
     const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);
@@ -208,7 +209,7 @@ client.on('messageDelete', async message => {
 
     const logEmbed = new EmbedBuilder()
         .setTitle('🗑️ **Message Deleted / حذف رسالة**')
-        .setDescription(`**Author:** ${message.author}\n**Channel:** ${message.channel}\n**Content:** \`${message.content || 'None / رسالة فارغة'}\``)
+        .setDescription(`**Author:** ${message.author}\n**Channel:** ${message.channel}\n**Content:** \`${message.content || 'None'}\``)
         .setColor('#ff0000')
         .setTimestamp();
 
@@ -234,7 +235,7 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
     logChannel.send({ embeds: [logEmbed] }).catch(() => {});
 });
 
-// 7. الأوامر والتذاكر ودخول/خروج الفويس
+// 7. الأوامر والتذاكر (Ticket & Voice Join/Leave)
 client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName, member, guild } = interaction;
@@ -299,6 +300,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
+    // إنشاء التذكرة ومنشن رول الدعم
     if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_select_menu') {
         const { guild, member, values } = interaction;
         const ticketType = values[0] === 'help_ticket' ? 'help' : 'report';
@@ -319,20 +321,38 @@ client.on('interactionCreate', async interaction => {
                 ],
             });
 
-            const closeRow = new ActionRowBuilder().addComponents(
+            // أزرار التحكم: Claim + Close
+            const ticketRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('claim_ticket').setLabel('استلام التذكرة 🙋‍♂️').setStyle(ButtonStyle.Primary),
                 new ButtonBuilder().setCustomId('close_ticket').setLabel('إغلاق التذكرة 🔒').setStyle(ButtonStyle.Danger)
             );
 
-            await ticketChannel.send({ content: `مرحباً بك ${member}، فريق الإدارة سيرد عليك قريباً.`, components: [closeRow] });
+            // منشن العضو ورول الدعم معاً
+            await ticketChannel.send({
+                content: `مرحباً بك ${member}!\nتم فتح التذكرة بنجاح.\n<@&${SUPPORT_ROLE_ID}> يرجى الدعم هنا.`,
+                components: [ticketRow]
+            });
+
             await interaction.editReply({ content: `تم إنشاء تذكرتك بنجاح: ${ticketChannel}` });
         } catch (error) {
             await interaction.editReply({ content: 'حدث خطأ أثناء إنشاء التذكرة.' });
         }
     }
 
-    if (interaction.isButton() && interaction.customId === 'close_ticket') {
-        await interaction.reply({ content: 'سيتم حذف التذكرة خلال 5 ثوانٍ...' });
-        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+    // أزرار التذكرة (Claim & Close)
+    if (interaction.isButton()) {
+        if (interaction.customId === 'claim_ticket') {
+            // التحقق مما إذا كان المستخدم يملك رول الدعم
+            if (!interaction.member.roles.cache.has(SUPPORT_ROLE_ID)) {
+                return interaction.reply({ content: '❌ عذراً، زر استلام التذكرة (Claim) مخصص لفريق الدعم فقط!', ephemeral: true });
+            }
+            await interaction.reply({ content: `✅ تم استلام هذه التذكرة بواسطة المشرف ${interaction.member}.` });
+        }
+
+        if (interaction.customId === 'close_ticket') {
+            await interaction.reply({ content: 'سيتم حذف التذكرة خلال 5 ثوانٍ...' });
+            setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
+        }
     }
 });
 
