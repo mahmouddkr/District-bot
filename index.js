@@ -1,4 +1,17 @@
 const { Client, GatewayIntentBits, SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const express = require('express');
+
+// إعداد خادم ويب بسيط لضمان عمل البوت على الاستضافات المجانية بدون مشاكل البورت
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('District System Bot is alive and running 24/7!');
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is listening on port ${PORT}`);
+});
 
 // آي دي الرومات الخاصة بك بدقة
 const WELCOME_CHANNEL_ID = '1560689193733324910';
