@@ -1,7 +1,8 @@
 const { Client, GatewayIntentBits, SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const express = require('express');
 
-// إعداد خادم ويب بسيط لضمان عمل البوت على الاستضافات المجانية بدون مشاكل البورت
+// خادم ويب بسيط لبقاء البوت شغال 24/7 على الاستضافات المجانية
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -13,11 +14,11 @@ app.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
 });
 
-// آي دي الرومات الخاصة بك بدقة
+// آي دي الرومات الخاصة بك بدقة متناهية
 const WELCOME_CHANNEL_ID = '1560689193733324910';
 const LEAVE_CHANNEL_ID = '1569090865551638709';
 const LOG_CHANNEL_ID = '1569093925266784286';       
-const ROLES_LOG_CHANNEL_ID = '1569094610217861171'; 
+const ROLES_LOG_CHANNEL_ID = '1569094610217861171'; // آي دي روم لوغ الرتب الصحيح
 
 const client = new Client({
     intents: [
@@ -40,15 +41,15 @@ const messageLogCooldown = new Set();
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}! District System is online 24/7.`);
 
-    const joinCommand = new SlashCommandBuilder().setName('join').setDescription('تسجيل الانضمام للنظام');
-    const leaveCommand = new SlashCommandBuilder().setName('leave').setDescription('تسجيل المغادرة من النظام');
+    const joinCommand = new SlashCommandBuilder().setName('join').setDescription('دخول البوت إلى روم الصوت الخاص بك');
+    const leaveCommand = new SlashCommandBuilder().setName('leave').setDescription('خروج البوت من روم الصوت');
     const ticketCommand = new SlashCommandBuilder().setName('ticket').setDescription('إرسال لوحة نظام التذاكر والدعم الفني');
 
     try {
         await client.application.commands.create(joinCommand);
         await client.application.commands.create(leaveCommand);
         await client.application.commands.create(ticketCommand);
-        console.log('Successfully registered all commands.');
+        console.log('Successfully registered all voice & system commands.');
     } catch (error) {
         console.error(error);
     }
@@ -153,7 +154,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// 5. لوغ الرتب - Roles Log
+// 5. لوغ الرتب المحدث بدقة لـ ROLES_LOG_CHANNEL_ID
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(ROLES_LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -170,7 +171,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
             const embed = new EmbedBuilder()
                 .setTitle('➕ **Role Added / منح رتبة**')
-                .setDescription(`**User:** ${newMember}\n**Role:** ${role.name}`)
+                .setDescription(`**User:** ${newMember} (${newMember.user.tag})\n**Role:** ${role.name}`)
                 .setColor('#00ff00')
                 .setTimestamp();
             logChannel.send({ embeds: [embed] }).catch(() => {});
@@ -186,7 +187,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
             const embed = new EmbedBuilder()
                 .setTitle('➖ **Role Removed / إزالة رتبة**')
-                .setDescription(`**User:** ${newMember}\n**Role:** ${role.name}`)
+                .setDescription(`**User:** ${newMember} (${newMember.user.tag})\n**Role:** ${role.name}`)
                 .setColor('#ff0000')
                 .setTimestamp();
             logChannel.send({ embeds: [embed] }).catch(() => {});
@@ -233,17 +234,43 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
     logChannel.send({ embeds: [logEmbed] }).catch(() => {});
 });
 
-// 7. الأوامر والتذاكر المنظمة
+// 7. الأوامر والتذاكر ودخول/خروج الفويس
 client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
-        const { commandName } = interaction;
+        const { commandName, member, guild } = interaction;
 
         if (commandName === 'join') {
-            await interaction.reply({ content: '✅ تم تسجيل انضمامك للنظام بنجاح.', ephemeral: true });
+            const voiceChannel = member.voice.channel;
+            if (!voiceChannel) {
+                return interaction.reply({ content: '❌ يجب أن تكون متواجداً في روم صوتي (Voice Channel) لكي يتمكن البوت من الدخول معك!', ephemeral: true });
+            }
+
+            try {
+                joinVoiceChannel({
+                    channelId: voiceChannel.id,
+                    guildId: guild.id,
+                    adapterCreator: guild.voiceAdapterCreator,
+                });
+                await interaction.reply({ content: `✅ تم انضمام البوت إلى روم الصوت: **${voiceChannel.name}** بنجاح!`, ephemeral: true });
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: '❌ حدث خطأ أثناء محاولة البوت دخول روم الصوت.', ephemeral: true });
+            }
         }
 
         if (commandName === 'leave') {
-            await interaction.reply({ content: '🚪 تم تسجيل مغادرتك من النظام بنجاح.', ephemeral: true });
+            const connection = getVoiceConnection(guild.id);
+            if (!connection) {
+                return interaction.reply({ content: '❌ البوت ليس متواجداً في أي روم صوتي حالياً!', ephemeral: true });
+            }
+
+            try {
+                connection.destroy();
+                await interaction.reply({ content: '🚪 تم مغادرة البوت لروم الصوت بنجاح.', ephemeral: true });
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: '❌ حدث خطأ أثناء إخراج البوت من الفويس.', ephemeral: true });
+            }
         }
 
         if (commandName === 'ticket') {
