@@ -14,11 +14,12 @@ app.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
 });
 
-// الآي دي الخاصة بالرومات والرتب بدقة
+// الأيدي الخاصة بالرومات والرتب بدقة متناهية
 const WELCOME_CHANNEL_ID = '1560689193733324910';
 const LEAVE_CHANNEL_ID = '1569090865551638709';
 const LOG_CHANNEL_ID = '1569093925266784286';       
 const ROLES_LOG_CHANNEL_ID = '1569094610217861171';
+const TICKET_LOG_CHANNEL_ID = '1565678345037815899';
 const SUPPORT_ROLE_ID = '1561461730545115276'; // رول الدعم الفني
 
 const client = new Client({
@@ -32,7 +33,7 @@ const client = new Client({
     ]
 });
 
-// حماية التكرار
+// حماية التكرار والسبام
 const welcomedMembers = new Set();
 const leftMembers = new Set();
 const voiceCooldown = new Set();
@@ -56,7 +57,7 @@ client.once('ready', async () => {
     }
 });
 
-// 1. الترحيب (Welcome)
+// 1. نظام الترحيب (Welcome)
 client.on('guildMemberAdd', async member => {
     if (member.user.bot) return;
     if (welcomedMembers.has(member.id)) return;
@@ -81,7 +82,7 @@ client.on('guildMemberAdd', async member => {
     }
 });
 
-// 2. المغادرة واللوغ
+// 2. المغادرة واللوغ العام
 client.on('guildMemberRemove', async member => {
     if (member.user.bot) return;
     if (leftMembers.has(member.id)) return;
@@ -111,7 +112,7 @@ client.on('guildMemberRemove', async member => {
     }
 });
 
-// 3. الحظر
+// 3. نظام الحظر
 client.on('guildBanAdd', async ban => {
     const logChannel = ban.guild.channels.cache.get(LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -125,7 +126,7 @@ client.on('guildBanAdd', async ban => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// 4. الفويس
+// 4. نظام الفويس (Voice States)
 client.on('voiceStateUpdate', async (oldState, newState) => {
     const logChannel = oldState.guild.channels.cache.get(LOG_CHANNEL_ID) || newState.guild.channels.cache.get(LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -155,7 +156,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// 5. لوغ الرتب
+// 5. نظام لوغ الرتب (Roles Log)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(ROLES_LOG_CHANNEL_ID);
     if (!logChannel) return;
@@ -196,7 +197,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     }
 });
 
-// 6. مراقبة الرسائل
+// 6. نظام مراقبة الرسائل (Delete & Edit)
 client.on('messageDelete', async message => {
     if (!message.guild || message.author?.bot) return;
     const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID);
@@ -235,7 +236,7 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
     logChannel.send({ embeds: [logEmbed] }).catch(() => {});
 });
 
-// 7. الأوامر والتذاكر (Ticket & Voice Join/Leave)
+// 7. الأوامر والتذاكر المتطورة
 client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName, member, guild } = interaction;
@@ -339,10 +340,10 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // أزرار التذكرة (Claim & Close)
+    // أزرار التذاكر (Claim & Close)
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            // التحقق مما إذا كان المستخدم يملك رول الدعم
+            // التحقق من رول الدعم
             if (!interaction.member.roles.cache.has(SUPPORT_ROLE_ID)) {
                 return interaction.reply({ content: '❌ عذراً، زر استلام التذكرة (Claim) مخصص لفريق الدعم فقط!', ephemeral: true });
             }
@@ -350,6 +351,17 @@ client.on('interactionCreate', async interaction => {
         }
 
         if (interaction.customId === 'close_ticket') {
+            // إرسال لوغ إغلاق التذكرة
+            const ticketLogChannel = interaction.guild.channels.cache.get(TICKET_LOG_CHANNEL_ID);
+            if (ticketLogChannel) {
+                const logEmbed = new EmbedBuilder()
+                    .setTitle('🔒 **Ticket Closed / إغلاق تذكرة**')
+                    .setDescription(`**Channel:** ${interaction.channel.name}\n**Closed by:** ${interaction.user} (${interaction.user.tag})`)
+                    .setColor('#ff3333')
+                    .setTimestamp();
+                ticketLogChannel.send({ embeds: [logEmbed] }).catch(() => {});
+            }
+
             await interaction.reply({ content: 'سيتم حذف التذكرة خلال 5 ثوانٍ...' });
             setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
         }
