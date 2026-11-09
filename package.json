@@ -1,7 +1,6 @@
 {
   "name": "district-bot",
   "version": "1.0.0",
-  "description": "District System Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
