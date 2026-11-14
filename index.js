@@ -33,9 +33,44 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildModeration
+        GatewayIntentBits.GuildModeration,
+        GatewayIntentBits.GuildInvites
     ],
     partials: [Partials.Message, Partials.Channel, Partials.GuildMember]
+});
+
+// تخزين الدعوات مؤقتاً لمعرفة من قام بالدعوة
+const invitesCache = new Map();
+
+client.on('ready', async () => {
+    console.log(`Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
+    client.user.setActivity('District RF Server', { type: 3 });
+
+    // جلب وحفظ دعوات السيرفر عند الإقلاع
+    for (const guild of client.guilds.cache.values()) {
+        try {
+            const firstInvites = await guild.invites.fetch();
+            invitesCache.set(guild.id, new Map(firstInvites.map((invite) => [invite.code, invite.uses])));
+        } catch (err) {
+            console.error(`Could not fetch invites for guild ${guild.name}:`, err);
+        }
+    }
+
+    // تسجيل جميع أوامر السلاش (Slash Commands) تلقائياً
+    const commands = [
+        new SlashCommandBuilder().setName('join').setDescription('دخول البوت إلى روم الصوت الخاص بك'),
+        new SlashCommandBuilder().setName('leave').setDescription('خروج البوت من روم الصوت'),
+        new SlashCommandBuilder().setName('ticket').setDescription('إرسال لوحة نظام التذاكر والدعم الفني'),
+        new SlashCommandBuilder().setName('games-roles').setDescription('إرسال لوحة اختيار رتب الألعاب'),
+        new SlashCommandBuilder().setName('setup-roles').setDescription('إرسال لوحة أزرار الرتب الثابتة')
+    ];
+
+    try {
+        await client.application.commands.set(commands);
+        console.log('Successfully registered all Slash Commands.');
+    } catch (error) {
+        console.error('Error registering slash commands:', error);
+    }
 });
 
 // الأيدي الخاصة بالرومات والسيرفر واللوغ
@@ -81,27 +116,6 @@ const ROLES = {
 const voiceCooldown = new Set();
 const roleCooldown = new Set();
 const messageLogCooldown = new Set();
-
-client.once('ready', async () => {
-    console.log(`Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
-    client.user.setActivity('District RF Server', { type: 3 });
-
-    // تسجيل جميع أوامر السلاش (Slash Commands) تلقائياً عند تشغيل البوت
-    const commands = [
-        new SlashCommandBuilder().setName('join').setDescription('دخول البوت إلى روم الصوت الخاص بك'),
-        new SlashCommandBuilder().setName('leave').setDescription('خروج البوت من روم الصوت'),
-        new SlashCommandBuilder().setName('ticket').setDescription('إرسال لوحة نظام التذاكر والدعم الفني'),
-        new SlashCommandBuilder().setName('games-roles').setDescription('إرسال لوحة اختيار رتب الألعاب'),
-        new SlashCommandBuilder().setName('setup-roles').setDescription('إرسال لوحة أزرار الرتب الثابتة')
-    ];
-
-    try {
-        await client.application.commands.set(commands);
-        console.log('Successfully registered all Slash Commands.');
-    } catch (error) {
-        console.error('Error registering slash commands:', error);
-    }
-});
 
 // ==========================================
 // 1. نظام لوغ السيرفر (Server Logs)
@@ -232,22 +246,41 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
 
 // ==========================================
-// 3. نظام الترحيب والمغادرة
+// 3. نظام الترحيب والمغادرة (مع معرفة من قام بالدعوة)
 // ==========================================
 client.on('guildMemberAdd', async member => {
     const channel = member.guild.channels.cache.get(CHANNELS.WELCOME);
     if (!channel) return;
 
+    let invitedBy = 'Unknown / رابط مباشر أو غير معروف';
+    try {
+        const guildInvites = await member.guild.invites.fetch();
+        const cachedInvites = invitesCache.get(member.guild.id);
+
+        if (cachedInvites) {
+            const usedInvite = guildInvites.find(inv => cachedInvites.get(inv.code) < inv.uses);
+            if (usedInvite && usedInvite.inviter) {
+                invitedBy = `${usedInvite.inviter} (${usedInvite.inviter.tag})`;
+            }
+        }
+
+        // تحديث الـ Cache بالدعوات الجديدة
+        invitesCache.set(member.guild.id, new Map(guildInvites.map((invite) => [invite.code, invite.uses])));
+    } catch (err) {
+        console.error('Error tracking invites:', err);
+    }
+
     const embed = new EmbedBuilder()
         .setColor('#2b2d31')
         .setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL({ dynamic: true }) })
-        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓! 🎮')
+        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐃𝐈Σ𝐓𝐑𝐈𝐂𝐓! 🌹')
         .setDescription(`👋 Welcome ${member}!\n\n🔥 Bienvenue dans notre communauté !\n\n🎮 Choisis tes jeux et partage tes meilleurs moments avec nous.\n\n❤️ مرحبًا بك في عائلة District!\n✨ هنا تبدأ المتعة، الصداقة والتحديات. نتمنى لك إقامة ممتعة معنا! 🏆`)
         .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
         .addFields(
             { name: '👤 MEMBER', value: `${member}`, inline: true },
             { name: '📅 ACCOUNT CREATED', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
-            { name: '✨ MEMBER COUNT', value: `${member.guild.memberCount}`, inline: true }
+            { name: '✨ MEMBER COUNT', value: `${member.guild.memberCount}`, inline: true },
+            { name: '🌹 INVITED BY', value: `${invitedBy}`, inline: false }
         )
         .setTimestamp();
 
@@ -274,11 +307,9 @@ client.on('guildMemberRemove', async member => {
 // 4. معالجة أوامر السلاش (Slash Commands) والتفاعلات
 // ==========================================
 client.on('interactionCreate', async interaction => {
-    // تشغيل أوامر السلاش
     if (interaction.isChatInputCommand()) {
         const { commandName, member, guild } = interaction;
 
-        // أمر /join
         if (commandName === 'join') {
             const voiceChannel = member.voice.channel;
             if (!voiceChannel) {
@@ -297,7 +328,6 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // أمر /leave
         if (commandName === 'leave') {
             const connection = getVoiceConnection(guild.id);
             if (!connection) {
@@ -312,7 +342,6 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // أمر /ticket
         if (commandName === 'ticket') {
             if (interaction.channel.id !== CHANNELS.TICKET_SETUP) {
                 return interaction.reply({ content: '❌ يرجى استخدام هذا الأمر في روم التذاكر المحدد!', ephemeral: true });
@@ -343,7 +372,6 @@ client.on('interactionCreate', async interaction => {
             await interaction.reply({ embeds: [embed], components: [row] });
         }
 
-        // أمر /games-roles
         if (commandName === 'games-roles') {
             if (interaction.channel.id !== CHANNELS.GAMES_ROLES) {
                 return interaction.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
@@ -378,7 +406,6 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // أمر /setup-roles
         if (commandName === 'setup-roles') {
             if (interaction.channel.id !== CHANNELS.STATIC_ROLES) {
                 return interaction.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
@@ -403,7 +430,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // تفاعلات الأزرار والقوائم المنسدلة
     if (interaction.isButton() && interaction.customId.startsWith('role_')) {
         await interaction.deferReply({ ephemeral: true });
         let roleId = '';
