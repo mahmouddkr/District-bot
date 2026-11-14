@@ -59,8 +59,8 @@ const invitesCache = new Map();
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
     
-    // تم تغيير الحالة هنا إلى 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓 🌹
-    client.user.setActivity('𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓 🌹', { type: 3 });
+    // تعيين الحالة District 🌹
+    client.user.setActivity('District 🌹', { type: 3 });
 
     // جلب وحفظ دعوات السيرفر عند الإقلاع
     for (const guild of client.guilds.cache.values()) {
@@ -343,7 +343,7 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
 
 
 // ==========================================
-// 2. نظام لوغ الرتب الشامل (Roles Logs)
+// 2. نظام لوغ الرتب الشامل والمطور (Roles Logs)
 // ==========================================
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
@@ -352,38 +352,42 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
     const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
 
+    // رصد منح الرتبة
     if (addedRoles.size > 0) {
         for (const role of addedRoles.values()) {
             await wait(1000);
-            let executor = 'مشرف غير معروف';
+            let executor = 'مشرف غير معروف (أو إزالة ذاتية / بوت)';
             try {
-                const logs = await newMember.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberRoleUpdate });
-                const entry = logs.entries.first();
-                if (entry && entry.target.id === newMember.id) executor = `${entry.executor.tag}`;
+                const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
+                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 10000));
+                if (entry) executor = `${entry.executor.tag}`;
             } catch (e) {}
 
             const embed = new EmbedBuilder()
-                .setTitle('➕ **Role Added / منح رتبة**')
-                .setDescription(`👤 **الضحية (العضو):** ${newMember.user.tag}\n🏷️ **الرول:** ${role.name}\n🛡️ **صاحب الفعل (By):** ${executor}`)
-                .setColor('#00ff00').setTimestamp();
+                .setTitle('➕ **Role Added / منح رتبة لعضو**')
+                .setDescription(`👤 **العضو (الضحية):** ${newMember} (\`${newMember.user.tag}\`)\n🏷️ **الرول المضاف:** ${role} (\`${role.name}\`)\n🛡️ **من قام بمنحه إياه (By):** ${executor}`)
+                .setColor('#00ff00')
+                .setTimestamp();
             logChannel.send({ embeds: [embed] }).catch(() => {});
         }
     }
 
+    // رصد نزع الرتبة
     if (removedRoles.size > 0) {
         for (const role of removedRoles.values()) {
             await wait(1000);
-            let executor = 'مشرف غير معروف';
+            let executor = 'مشرف غير معروف (أو إزالة ذاتية / بوت)';
             try {
-                const logs = await newMember.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberRoleUpdate });
-                const entry = logs.entries.first();
-                if (entry && entry.target.id === newMember.id) executor = `${entry.executor.tag}`;
+                const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
+                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 10000));
+                if (entry) executor = `${entry.executor.tag}`;
             } catch (e) {}
 
             const embed = new EmbedBuilder()
-                .setTitle('➖ **Role Removed / نزع رول**')
-                .setDescription(`👤 **الضحية (العضو):** ${newMember.user.tag}\n🏷️ **الرول:** ${role.name}\n🛡️ **صاحب الفعل (By):** ${executor}`)
-                .setColor('#ff0000').setTimestamp();
+                .setTitle('➖ **Role Removed / نزع رول من عضو**')
+                .setDescription(`👤 **العضو (الضحية):** ${newMember} (\`${newMember.user.tag}\`)\n🏷️ **الرول المنزوع:** ${role} (\`${role.name}\`)\n🛡️ **من قام بنزعه (By):** ${executor}`)
+                .setColor('#ff0000')
+                .setTimestamp();
             logChannel.send({ embeds: [embed] }).catch(() => {});
         }
     }
@@ -402,9 +406,10 @@ client.on('roleCreate', async role => {
     } catch (e) {}
 
     const embed = new EmbedBuilder()
-        .setTitle('✨ **Role Created / إنشاء رول**')
+        .setTitle('✨ **Role Created / إنشاء رول جديد**')
         .setDescription(`🏷️ **الرول:** ${role.name}\n🛡️ **صاحب الفعل (By):** ${creator}`)
-        .setColor('#00ffff').setTimestamp();
+        .setColor('#00ffff')
+        .setTimestamp();
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
@@ -423,7 +428,8 @@ client.on('roleDelete', async role => {
     const embed = new EmbedBuilder()
         .setTitle('🔥 **Role Deleted / حذف رول**')
         .setDescription(`🏷️ **الرول المحذوف:** ${role.name}\n🛡️ **صاحب الفعل (By):** ${deleter}`)
-        .setColor('#ff4500').setTimestamp();
+        .setColor('#ff4500')
+        .setTimestamp();
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
