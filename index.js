@@ -59,8 +59,8 @@ const invitesCache = new Map();
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
     
-    // تم تغيير الحالة هنا إلى District 🌹
-    client.user.setActivity('District 🌹', { type: 3 });
+    // تم تغيير الحالة هنا إلى 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓 🌹
+    client.user.setActivity('𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓 🌹', { type: 3 });
 
     // جلب وحفظ دعوات السيرفر عند الإقلاع
     for (const guild of client.guilds.cache.values()) {
