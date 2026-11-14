@@ -8,8 +8,10 @@ const {
     StringSelectMenuBuilder, 
     EmbedBuilder, 
     ChannelType, 
-    PermissionsBitField 
+    PermissionsBitField,
+    SlashCommandBuilder
 } = require('discord.js');
+const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const express = require('express');
 
 // خادم ويب لبقاء البوت شغال 24/7 على Render
@@ -44,13 +46,13 @@ const CHANNELS = {
     WELCOME: '1560689193733324910',     // روم الترحيب
     GOODBYE: '1569090865551638709',     // روم المغادرة
     TICKET_SETUP: '1559364091368181870',   // روم إرسال رسالة التذاكر
-    STATIC_ROLES: '1565462147100844154',   // روم الرتب الثابتة (!setup-roles)
-    GAMES_ROLES: '1560471208766476298'     // روم رتب الألعاب (!games-roles)
+    STATIC_ROLES: '1565462147100844154',   // روم الرتب الثابتة
+    GAMES_ROLES: '1560471208766476298'     // روم رتب الألعاب
 };
 
 // الأيدي الخاصة بالرتب للصلاحيات والتسليم
 const ROLES = {
-    STAFF_SUPPORT: '1561461730545115276', // رول الدعم لتذاكر Help و Report
+    STAFF_SUPPORT: '1561461730545115276', // رول الدعم
     PARTNER_1: '1560523485850247168',     // رول الشراكات الأول
     PARTNER_2: '1560523789991813180',     // رول الشراكات الثاني
     DISTRICTIAN: '1560723045222453269',   // رول ديستريكتيان
@@ -80,16 +82,30 @@ const voiceCooldown = new Set();
 const roleCooldown = new Set();
 const messageLogCooldown = new Set();
 
-client.once('ready', () => {
+client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
     client.user.setActivity('District RF Server', { type: 3 });
+
+    // تسجيل جميع أوامر السلاش (Slash Commands) تلقائياً عند تشغيل البوت
+    const commands = [
+        new SlashCommandBuilder().setName('join').setDescription('دخول البوت إلى روم الصوت الخاص بك'),
+        new SlashCommandBuilder().setName('leave').setDescription('خروج البوت من روم الصوت'),
+        new SlashCommandBuilder().setName('ticket').setDescription('إرسال لوحة نظام التذاكر والدعم الفني'),
+        new SlashCommandBuilder().setName('games-roles').setDescription('إرسال لوحة اختيار رتب الألعاب'),
+        new SlashCommandBuilder().setName('setup-roles').setDescription('إرسال لوحة أزرار الرتب الثابتة')
+    ];
+
+    try {
+        await client.application.commands.set(commands);
+        console.log('Successfully registered all Slash Commands.');
+    } catch (error) {
+        console.error('Error registering slash commands:', error);
+    }
 });
 
 // ==========================================
 // 1. نظام لوغ السيرفر (Server Logs)
 // ==========================================
-
-// حظر عضو
 client.on('guildBanAdd', async ban => {
     const logChannel = ban.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
@@ -103,7 +119,6 @@ client.on('guildBanAdd', async ban => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// تحديثات الفويس (دخول، خروج، وانتقال)
 client.on('voiceStateUpdate', async (oldState, newState) => {
     const logChannel = oldState.guild.channels.cache.get(CHANNELS.LOG) || newState.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
@@ -133,7 +148,6 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// حذف الرسائل
 client.on('messageDelete', async message => {
     if (!message.guild || message.author?.bot) return;
     const logChannel = message.guild.channels.cache.get(CHANNELS.LOG);
@@ -153,7 +167,6 @@ client.on('messageDelete', async message => {
     logChannel.send({ embeds: [logEmbed] }).catch(() => {});
 });
 
-// تعديل الرسائل
 client.on('messageUpdate', async (oldMessage, newMessage) => {
     if (!oldMessage.guild || oldMessage.author?.bot || oldMessage.content === newMessage.content) return;
     const logChannel = oldMessage.guild.channels.cache.get(CHANNELS.LOG);
@@ -258,105 +271,139 @@ client.on('guildMemberRemove', async member => {
 
 
 // ==========================================
-// 4. الأوامر المكتوبة (Setup Roles & Tickets)
+// 4. معالجة أوامر السلاش (Slash Commands) والتفاعلات
 // ==========================================
-client.on('messageCreate', async message => {
-    if (message.author.bot) return;
+client.on('interactionCreate', async interaction => {
+    // تشغيل أوامر السلاش
+    if (interaction.isChatInputCommand()) {
+        const { commandName, member, guild } = interaction;
 
-    // أمر رتب الألعاب
-    if (message.content === '/games roles' || message.content === '!games-roles') {
-        if (message.channel.id !== CHANNELS.GAMES_ROLES) return message.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
+        // أمر /join
+        if (commandName === 'join') {
+            const voiceChannel = member.voice.channel;
+            if (!voiceChannel) {
+                return interaction.reply({ content: '❌ يجب أن تكون متواجداً في روم صوتي (Voice Channel) لكي يتمكن البوت من الدخول معك!', ephemeral: true });
+            }
+            try {
+                joinVoiceChannel({
+                    channelId: voiceChannel.id,
+                    guildId: guild.id,
+                    adapterCreator: guild.voiceAdapterCreator,
+                });
+                await interaction.reply({ content: `✅ تم انضمام البوت إلى روم الصوت: **${voiceChannel.name}** بنجاح!`, ephemeral: true });
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: '❌ حدث خطأ أثناء محاولة البوت دخول روم الصوت.', ephemeral: true });
+            }
+        }
 
-        const embed = new EmbedBuilder()
-            .setColor('#ffffff')
-            .setTitle('🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥')
-            .setDescription(`🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                `:00000_purple_moon: **GAMES**\n\n` +
-                `:cs2: ➔ <@&${ROLES.GAMES.cs2}>\n` +
-                `:valo: ➔ <@&${ROLES.GAMES.valo}>\n` +
-                `:fortnite: ➔ <@&${ROLES.GAMES.fortnite}>\n` +
-                `:fire: ➔ <@&${ROLES.GAMES.fire}>\n` +
-                `:rocket_leauge: ➔ <@&${ROLES.GAMES.rocket}>\n` +
-                `:amongus: ➔ <@&${ROLES.GAMES.amongus}>\n` +
-                `:minecraft: ➔ <@&${ROLES.GAMES.minecraft}>\n` +
-                `:roblox: ➔ <@&${ROLES.GAMES.roblox}>\n` +
-                `:soccer: ➔ <@&${ROLES.GAMES.soccer}>\n` +
-                `:blue_car: ➔ <@&${ROLES.GAMES.bluecar}>\n` +
-                `:pes: ➔ <@&${ROLES.GAMES.pes}>\n` +
-                `:race_car: ➔ <@&${ROLES.GAMES.racecar}>\n` +
-                `:fivem: ➔ <@&${ROLES.GAMES.fivem}>\n\n` +
-                `🌹・𝑪𝒉𝒐𝒐𝒔𝒆 𝒀𝒐𝒖𝒓 𝑹𝒐𝒍𝒆`)
-            .setFooter({ text: 'تفاعل بالريأكشن المناسب بالأسفل للحصول على الرتبة!' });
+        // أمر /leave
+        if (commandName === 'leave') {
+            const connection = getVoiceConnection(guild.id);
+            if (!connection) {
+                return interaction.reply({ content: '❌ البوت ليس متواجداً في أي روم صوتي حالياً!', ephemeral: true });
+            }
+            try {
+                connection.destroy();
+                await interaction.reply({ content: '🚪 تم مغادرة البوت لروم الصوت بنجاح.', ephemeral: true });
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: '❌ حدث خطأ أثناء إخراج البوت من الفويس.', ephemeral: true });
+            }
+        }
 
-        const msg = await message.channel.send({ embeds: [embed] });
-        message.delete().catch(() => {});
+        // أمر /ticket
+        if (commandName === 'ticket') {
+            if (interaction.channel.id !== CHANNELS.TICKET_SETUP) {
+                return interaction.reply({ content: '❌ يرجى استخدام هذا الأمر في روم التذاكر المحدد!', ephemeral: true });
+            }
 
-        const emojis = ['🇨🇸', '🇻🇦', '🇫🇳', '🔥', '🚀', '👾', '⛏️', '🤖', '⚽', '🚗', '🏟️', '🏎️', '🖥️'];
-        for (const emoji of emojis) {
-            await msg.react(emoji).catch(() => {});
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('ticket_menu')
+                .setPlaceholder('اختر خيار التذكرة...')
+                .addOptions([
+                    { label: 'NEED HELP', description: 'للمساعدة العامة والاستفسارات والأوامر وقوانين السيرفر.', value: 'ticket_help', emoji: '❓' },
+                    { label: 'REPORTS', description: 'للإبلاغ عن المخالفات والمشاكل (بسرية تامة).', value: 'ticket_report', emoji: '🚨' },
+                    { label: 'PARTNERSHIP', description: 'لطلب الشراكات ونشر السيرفرات وتعريفها.', value: 'ticket_partner', emoji: '🤝' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+
+            const embed = new EmbedBuilder()
+                .setColor('#ffffff')
+                .setTitle('الدعم الفني - District')
+                .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n' +
+                    '❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n' +
+                    '🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n' +
+                    '🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n' +
+                    '📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
+                .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&')
+                .setFooter({ text: 'District Server © 2026' });
+
+            await interaction.reply({ embeds: [embed], components: [row] });
+        }
+
+        // أمر /games-roles
+        if (commandName === 'games-roles') {
+            if (interaction.channel.id !== CHANNELS.GAMES_ROLES) {
+                return interaction.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#ffffff')
+                .setTitle('🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥')
+                .setDescription(`🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
+                    `:00000_purple_moon: **GAMES**\n\n` +
+                    `:cs2: ➔ <@&${ROLES.GAMES.cs2}>\n` +
+                    `:valo: ➔ <@&${ROLES.GAMES.valo}>\n` +
+                    `:fortnite: ➔ <@&${ROLES.GAMES.fortnite}>\n` +
+                    `:fire: ➔ <@&${ROLES.GAMES.fire}>\n` +
+                    `:rocket_leauge: ➔ <@&${ROLES.GAMES.rocket}>\n` +
+                    `:amongus: ➔ <@&${ROLES.GAMES.amongus}>\n` +
+                    `:minecraft: ➔ <@&${ROLES.GAMES.minecraft}>\n` +
+                    `:roblox: ➔ <@&${ROLES.GAMES.roblox}>\n` +
+                    `:soccer: ➔ <@&${ROLES.GAMES.soccer}>\n` +
+                    `:blue_car: ➔ <@&${ROLES.GAMES.bluecar}>\n` +
+                    `:pes: ➔ <@&${ROLES.GAMES.pes}>\n` +
+                    `:race_car: ➔ <@&${ROLES.GAMES.racecar}>\n` +
+                    `:fivem: ➔ <@&${ROLES.GAMES.fivem}>\n\n` +
+                    `🌹・𝑪𝒉𝒐𝒐𝒔𝒆 𝒀𝒐𝒖𝒓 𝑹𝒐𝒍𝒆`)
+                .setFooter({ text: 'تفاعل بالريأكشن المناسب بالأسفل للحصول على الرتبة!' });
+
+            const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
+
+            const emojis = ['🇨🇸', '🇻🇦', '🇫🇳', '🔥', '🚀', '👾', '⛏️', '🤖', '⚽', '🚗', '🏟️', '🏎️', '🖥️'];
+            for (const emoji of emojis) {
+                await msg.react(emoji).catch(() => {});
+            }
+        }
+
+        // أمر /setup-roles
+        if (commandName === 'setup-roles') {
+            if (interaction.channel.id !== CHANNELS.STATIC_ROLES) {
+                return interaction.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
+            }
+
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝒏').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
+                new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
+            );
+
+            const embed = new EmbedBuilder()
+                .setColor('#2b2d31')
+                .setTitle('🌟 أهلاً بك في سيرفر 🌹District 🌟')
+                .setDescription('مرحباً بك يا صديقي في مجتمعنا!\n\n' +
+                    '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n' +
+                    '🌌 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر لفتح الشات العام والتفاعل بحرية.\n' +
+                    '🎮 **Mini Games** : رول خاص بمحبي الألعاب للمشاركة في التحديات والفعاليات المصغرة\n\n' +
+                    '👇 اضغط على الأزرار بالأسفل لتبدأ معنا!');
+
+            await interaction.reply({ embeds: [embed], components: [row] });
         }
     }
 
-    // أمر الرتب الثابتة
-    if (message.content === '/setup roles' || message.content === '!setup-roles') {
-        if (message.channel.id !== CHANNELS.STATIC_ROLES) return message.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
-
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝒏').setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
-            new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
-        );
-
-        const embed = new EmbedBuilder()
-            .setColor('#2b2d31')
-            .setTitle('🌟 أهلاً بك في سيرفر 🌹District 🌟')
-            .setDescription('مرحباً بك يا صديقي في مجتمعنا!\n\n' +
-                '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n' +
-                '🌌 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر لفتح الشات العام والتفاعل بحرية.\n' +
-                '🎮 **Mini Games** : رول خاص بمحبي الألعاب للمشاركة في التحديات والفعاليات المصغرة\n\n' +
-                '👇 اضغط على الأزرار بالأسفل لتبدأ معنا!');
-
-        await message.channel.send({ embeds: [embed], components: [row] });
-        message.delete().catch(() => {});
-    }
-
-    // أمر التذاكر
-    if (message.content === '/ticket' || message.content === '!setup-ticket') {
-        if (message.channel.id !== CHANNELS.TICKET_SETUP) return message.reply({ content: '❌ يرجى استخدام هذا الأمر في روم التذاكر المحدد!', ephemeral: true });
-
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('ticket_menu')
-            .setPlaceholder('اختر خيار التذكرة...')
-            .addOptions([
-                { label: 'NEED HELP', description: 'للمساعدة العامة والاستفسارات والأوامر وقوانين السيرفر.', value: 'ticket_help', emoji: '❓' },
-                { label: 'REPORTS', description: 'للإبلاغ عن المخالفات والمشاكل (بسرية تامة).', value: 'ticket_report', emoji: '🚨' },
-                { label: 'PARTNERSHIP', description: 'لطلب الشراكات ونشر السيرفرات وتعريفها.', value: 'ticket_partner', emoji: '🤝' }
-            ]);
-
-        const row = new ActionRowBuilder().addComponents(selectMenu);
-
-        const embed = new EmbedBuilder()
-            .setColor('#ffffff')
-            .setTitle('الدعم الفني - District')
-            .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n' +
-                '❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n' +
-                '🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n' +
-                '🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n' +
-                '📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
-            .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&')
-            .setFooter({ text: 'District Server © 2026' });
-
-        await message.channel.send({ embeds: [embed], components: [row] });
-        message.delete().catch(() => {});
-    }
-});
-
-
-// ==========================================
-// 5. التفاعلات (أزرار الرتب، التذاكر، والريأكشن)
-// ==========================================
-client.on('interactionCreate', async interaction => {
-    // الأزرار للرتب الثابتة
+    // تفاعلات الأزرار والقوائم المنسدلة
     if (interaction.isButton() && interaction.customId.startsWith('role_')) {
         await interaction.deferReply({ ephemeral: true });
         let roleId = '';
@@ -377,7 +424,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // القائمة المنسدلة للتذاكر
     if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_menu') {
         const choice = interaction.values[0];
         let ticketName = 'ticket';
@@ -419,7 +465,6 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ content: `✅ تم إنشاء تذكرتك بنجاح: ${channel}`, ephemeral: true });
     }
 
-    // أزرار داخل التذكرة (Claim & Close)
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
             const member = interaction.member;
