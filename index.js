@@ -133,7 +133,7 @@ const messageLogCooldown = new Set();
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ==========================================
-// 1. نظام لوغ السيرفر الشامل (Server Logs)
+// 1. نظام لوغ السيرفر الشامل (Server Logs) مع التاغ الكامل
 // ==========================================
 
 // حظر عضو (Ban)
@@ -211,7 +211,7 @@ client.on('guildAuditLogEntryCreate', async (auditLogEntry, guild) => {
     }
 });
 
-// الأحداث الصوتية (Voice States: Disconnect, Move, Undeafen, Deafen, Mute)
+// الأحداث الصوتية في Server Logs (Disconnect, Move, Undeafen, Deafen, Mute)
 client.on('voiceStateUpdate', async (oldState, newState) => {
     const logChannel = oldState.guild.channels.cache.get(CHANNELS.LOG) || newState.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
@@ -315,7 +315,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 
 // ==========================================
-// 2. نظام لوغ الرتب (Roles Logs) - مع فلترة تحريك الرول المسحوب بيدك فقط
+// 2. نظام لوغ الرتب (Roles Logs) مع منع تكرار الرومات وتحريك الرول المطلوب فقط
 // ==========================================
 
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
@@ -332,7 +332,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             try {
                 const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
                 const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 10000));
-                if (entry?.executor) executor = `<@${entry.executor.id}>`;
+                if (entry) executor = `<@${entry.executor.id}>`;
             } catch (e) {}
 
             const embed = new EmbedBuilder()
@@ -350,7 +350,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             try {
                 const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
                 const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 10000));
-                if (entry?.executor) executor = `<@${entry.executor.id}>`;
+                if (entry) executor = `<@${entry.executor.id}>`;
             } catch (e) {}
 
             const embed = new EmbedBuilder()
@@ -362,6 +362,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     }
 });
 
+// مخزن مؤقت لترتيب وتحريك الرولات (يعرض الرول المسحوب باليد فقط دون باقي الرولات التلقائية)
 const roleMoveBuffer = new Map();
 
 client.on('roleUpdate', async (oldRole, newRole) => {
@@ -381,12 +382,12 @@ client.on('roleUpdate', async (oldRole, newRole) => {
         removedPerms.length > 0;
 
     if (hasOtherChanges) {
-        await wait(1500);
-        let executor = 'غير مسجل';
+        await wait(1200);
+        let executor = 'مشرف غير معروف';
         try {
-            const logs = await newRole.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.RoleUpdate });
-            const entry = logs.entries.find(e => e.target?.id === newRole.id && (Date.now() - e.createdTimestamp < 15000));
-            if (entry?.executor) executor = `<@${entry.executor.id}>`;
+            const logs = await newRole.guild.fetchAuditLogs({ limit: 3, type: AuditLogEvent.RoleUpdate });
+            const entry = logs.entries.find(e => e.target.id === newRole.id && (Date.now() - e.createdTimestamp < 10000));
+            if (entry) executor = `<@${entry.executor.id}>`;
         } catch (e) {}
 
         let changes = [];
@@ -416,15 +417,15 @@ client.on('roleUpdate', async (oldRole, newRole) => {
                 roleMoveBuffer.delete(guildId);
                 if (moves.length === 0) return;
 
-                // اختيار الرول صاحب أكبر مسافة حركة (الرول الذي تم سحبه باليد)
+                // اختيار الرول صاحب الفارق الأكبر في الحركة (الرول الذي تم سحبه باليد)
                 moves.sort((a, b) => Math.abs(b.newPos - b.oldPos) - Math.abs(a.newPos - a.oldPos));
                 const mainMovedRole = moves[0];
 
-                let executor = 'غير مسجل (ديسكورد لا يرسل اسم المشرف عند تحريك الرولات)';
+                let executor = 'مشرف غير معروف';
                 try {
                     const logs = await newRole.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.RoleUpdate });
-                    const entry = logs.entries.find(e => (Date.now() - e.createdTimestamp < 15000));
-                    if (entry?.executor) executor = `<@${entry.executor.id}>`;
+                    const entry = logs.entries.find(e => (Date.now() - e.createdTimestamp < 10000));
+                    if (entry) executor = `<@${entry.executor.id}>`;
                 } catch (e) {}
 
                 const embed = new EmbedBuilder()
@@ -434,7 +435,7 @@ client.on('roleUpdate', async (oldRole, newRole) => {
                     .setTimestamp();
 
                 logChannel.send({ embeds: [embed] }).catch(() => {});
-            }, 2000);
+            }, 1500);
         }
 
         const currentMoves = roleMoveBuffer.get(guildId);
@@ -588,7 +589,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${interaction.member}.` });
+            await interaction.reply({ content: `🙋‍♂️ تم استلاستلم التذكرة بواسطة ${interaction.member}.` });
         }
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة...' });
