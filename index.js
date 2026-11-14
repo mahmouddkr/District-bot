@@ -433,6 +433,7 @@ client.on('roleDelete', async role => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
+// رصد تعديل الرولات، الأصول، الصلاحيات، وتغيير مكان الرول (Move Role) المخصص للرول المعدل فقط
 client.on('roleUpdate', async (oldRole, newRole) => {
     const logChannel = newRole.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
@@ -448,22 +449,44 @@ client.on('roleUpdate', async (oldRole, newRole) => {
     } catch (e) {}
 
     let changes = [];
+
+    // فحص تغيير الاسم
     if (oldRole.name !== newRole.name) {
         changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
     }
+
+    // فحص تغيير اللون
     if (oldRole.hexColor !== newRole.hexColor) {
         changes.push(`🎨 **تغيير اللون:** من \`${oldRole.hexColor}\` إلى \`${newRole.hexColor}\``);
     }
-    if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) {
-        changes.push(`⚡ **تغيير الصلاحيات:** تم تعديل صلاحيات الرول.`);
+
+    // فحص تغيير مكان الرول (Move Role) - يذكر هذا الرول فقط بالذات دون غيره
+    if (oldRole.position !== newRole.position) {
+        changes.push(`↕️ **تغيير الموقع (Move Role):** تم تحريك موقع الرول من الترتيب \`${oldRole.position}\` إلى \`${newRole.position}\``);
     }
+
+    // فحص الصلاحيات المضافة والمنفية بالتحديد
+    const oldPerms = new PermissionsBitField(oldRole.permissions.bitfield);
+    const newPerms = new PermissionsBitField(newRole.permissions.bitfield);
+
+    const addedPerms = newPerms.toArray().filter(p => !oldPerms.has(p));
+    const removedPerms = oldPerms.toArray().filter(p => !newPerms.has(p));
+
+    if (addedPerms.length > 0) {
+        changes.push(`✅ **الصلاحيات المضافة:** \`${addedPerms.join(', ')}\``);
+    }
+
+    if (removedPerms.length > 0) {
+        changes.push(`❌ **الصلاحيات المنفية (المزالة):** \`${removedPerms.join(', ')}\``);
+    }
+
     if (changes.length === 0) {
         changes.push(`✏️ **تعديل عام:** تم تحديث إعدادات الرول.`);
     }
 
     const embed = new EmbedBuilder()
         .setTitle('🛠️ **Role Updated / تعديل رول**')
-        .setDescription(`🏷️ **الرول:** ${newRole}\n\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
+        .setDescription(`🏷️ **الرول المعدل:** ${newRole} (\`${newRole.name}\`)\n\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
         .setColor('#ffa500')
         .setTimestamp();
 
