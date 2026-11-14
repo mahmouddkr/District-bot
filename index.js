@@ -45,7 +45,7 @@ const invitesCache = new Map();
 
 client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
-    client.user.setActivity('District RF Server', { type: 3 });
+    client.user.setActivity('Communauté Server', { type: 3 });
 
     // جلب وحفظ دعوات السيرفر عند الإقلاع
     for (const guild of client.guilds.cache.values()) {
@@ -86,6 +86,12 @@ const CHANNELS = {
     GAMES_ROLES: '1560471208766476298'     // روم رتب الألعاب
 };
 
+// الأيدي الخاصة بالشانلات المخصصة لألعاب Fizbo
+const GAME_CHANNELS = [
+    '1560721542617239602',
+    '1560501807602606121'
+];
+
 // الأيدي الخاصة بالرتب للصلاحيات والتسليم
 const ROLES = {
     STAFF_SUPPORT: '1561461730545115276', // رول الدعم
@@ -95,7 +101,6 @@ const ROLES = {
     MINI_GAMES: '1560453077058850927',    // رول ميني قيمز
     VERIFY: '1560453481217785926',        // رول فيريفاي
     
-    // رتب الألعاب الـ 13 بالترتيب
     GAMES: {
         'cs2': '1560453628790055052',
         'valo': '1560453742774591519',
@@ -113,18 +118,51 @@ const ROLES = {
     }
 };
 
-// حماية التكرار والسبام للوغ
+// حماية التكرار والسبام للوغ والنقاط
 const voiceCooldown = new Set();
 const roleCooldown = new Set();
 const messageLogCooldown = new Set();
+const userPoints = new Map();
+const activeGames = new Map();
 
-// دالة انتظار لضمان التقاط الـ Audit Logs بدقة
+// مكتبة ألعاب Fizbo (فكك، عواصم، رياضيات)
+const wordGames = [
+    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **م د ر س ة**', answer: 'مدرسة' },
+    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **ب ر م ج ة**', answer: 'برمجة' },
+    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **د ي س ك و ر د**', answer: 'ديسكورد' },
+    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **س ي ر ف ر**', answer: 'سيرفر' },
+    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **ت ح د ي**', answer: 'تحدي' }
+];
+
+const capitalGames = [
+    { question: '🌍 ما هي عاصمة **الجزائر**؟', answer: 'الجزائر' },
+    { question: '🌍 ما هي عاصمة **فرنسا**؟', answer: 'باريس' },
+    { question: '🌍 ما هي عاصمة **المملكة العربية السعودية**؟', answer: 'الرياض' },
+    { question: '🌍 ما هي عاصمة **إسبانيا**؟', answer: 'مدريد' },
+    { question: '🌍 ما هي عاصمة **إيطاليا**؟', answer: 'روما' }
+];
+
+const mathGames = [
+    { question: '🔢 كم الناتج الحسابي؟ **15 + 25 = ?**', answer: '40' },
+    { question: '🔢 كم الناتج الحسابي؟ **8 × 7 = ?**', answer: '56' },
+    { question: '🔢 كم الناتج الحسابي؟ **100 - 35 = ?**', answer: '65' },
+    { question: '🔢 كم الناتج الحسابي؟ **12 × 12 = ?**', answer: '144' }
+];
+
+function getRandomGame() {
+    const types = ['word', 'capital', 'math'];
+    const selectedType = types[Math.floor(Math.random() * types.length)];
+    
+    if (selectedType === 'word') return { type: 'word', ...wordGames[Math.floor(Math.random() * wordGames.length)] };
+    if (selectedType === 'capital') return { type: 'capital', ...capitalGames[Math.floor(Math.random() * capitalGames.length)] };
+    return { type: 'math', ...mathGames[Math.floor(Math.random() * mathGames.length)] };
+}
+
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ==========================================
-// 1. نظام لوغ السيرفر الشامل (Server Logs) مع معرفة (الضحية وصاحب الفعل By)
+// 1. نظام لوغ السيرفر الشامل (Server Logs)
 // ==========================================
-
 client.on('guildBanAdd', async ban => {
     const logChannel = ban.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
@@ -175,7 +213,6 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     voiceCooldown.add(cooldownKey);
     setTimeout(() => voiceCooldown.delete(cooldownKey), 3000);
 
-    // Disconnect / طرد أو خروج من الفويس
     if (oldState.channelId && !newState.channelId) {
         await wait(1000);
         let discBy = `${member.user.tag} (خرج بنفسه)`;
@@ -193,7 +230,6 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
             .setColor('#ff9900').setTimestamp();
         return logChannel.send({ embeds: [embed] }).catch(() => {});
     } 
-    // Join / انضمام
     else if (!oldState.channelId && newState.channelId) {
         const embed = new EmbedBuilder()
             .setTitle('🔊 **Voice Joined / انضمام للفويس**')
@@ -201,7 +237,6 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
             .setColor('#00ccff').setTimestamp();
         return logChannel.send({ embeds: [embed] }).catch(() => {});
     } 
-    // Move / نقل صوتي
     else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
         await wait(1000);
         let movedBy = `${member.user.tag} (انتقال ذاتي)`;
@@ -220,7 +255,6 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         return logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    // Server Mute / Unmute
     if (oldState.serverMute !== newState.serverMute) {
         await wait(1000);
         let mutedBy = 'مشرف غير معروف';
@@ -240,7 +274,6 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    // Server Deafen / Undeafen
     if (oldState.serverDeaf !== newState.serverDeaf) {
         await wait(1000);
         let deafBy = 'مشرف غير معروف';
@@ -301,48 +334,16 @@ client.on('channelDelete', async channel => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-client.on('messageDelete', async message => {
-    if (!message.guild || message.author?.bot) return;
-    const logChannel = message.guild.channels.cache.get(CHANNELS.LOG);
-    if (!logChannel) return;
-
-    const mKey = `del-${message.id}`;
-    if (messageLogCooldown.has(mKey)) return;
-    messageLogCooldown.add(mKey);
-    setTimeout(() => messageLogCooldown.delete(mKey), 5000);
-
-    const logEmbed = new EmbedBuilder()
-        .setTitle('🗑️ **Message Deleted / حذف رسالة**')
-        .setDescription(`👤 **صاحب الرسالة:** ${message.author}\n📌 **في روم:** ${message.channel}\n💬 **المحتوى:** \`${message.content || 'None'}\``)
-        .setColor('#ff0000').setTimestamp();
-    logChannel.send({ embeds: [logEmbed] }).catch(() => {});
-});
-
-client.on('messageUpdate', async (oldMessage, newMessage) => {
-    if (!oldMessage.guild || oldMessage.author?.bot || oldMessage.content === newMessage.content) return;
-    const logChannel = oldMessage.guild.channels.cache.get(CHANNELS.LOG);
-    if (!logChannel) return;
-
-    const mKey = `edit-${newMessage.id}`;
-    if (messageLogCooldown.has(mKey)) return;
-    messageLogCooldown.add(mKey);
-    setTimeout(() => messageLogCooldown.delete(mKey), 5000);
-
-    const logEmbed = new EmbedBuilder()
-        .setTitle('✏️ **Message Edited / تعديل رسالة**')
-        .setDescription(`👤 **صاحب الرسالة:** ${oldMessage.author}\n📌 **في روم:** ${oldMessage.channel}\n\n**قبل:** \`${oldMessage.content}\`\n**بعد:** \`${newMessage.content}\``)
-        .setColor('#ffa500').setTimestamp();
-    logChannel.send({ embeds: [logEmbed] }).catch(() => {});
-});
-
 
 // ==========================================
-// 2. نظام لوغ الرتب الشامل (Roles Logs) مع صاحب الفعل (By)
+// 2. نظام لوغ الرتب الشامل (Roles Logs)
 // ==========================================
-
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
+
+    // أولاً: فحص ألعاب Fizbo المكتوبة في الشات (إذا حدث تحديث رتب)
+    const isGameChannel = GAME_CHANNELS.includes(newMember.id); // للاحتياط
 
     const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
     const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
@@ -424,7 +425,99 @@ client.on('roleDelete', async role => {
 
 
 // ==========================================
-// 3. الترحيب، المغادرة، أوامر السلاش، التذاكر، والألعاب
+// 3. نظام ألعاب Fizbo والترفيه في الشات (الروليت، النقاط، والحدس)
+// ==========================================
+client.on('messageCreate', async message => {
+    if (message.author.bot || !message.guild) return;
+
+    const isGameChannel = GAME_CHANNELS.includes(message.channel.id);
+    const args = message.content.trim().split(/ +/);
+    const command = args[0].toLowerCase();
+
+    // أمر الروليت: -روليت
+    if (command === '-روليت') {
+        if (!isGameChannel) {
+            return message.reply({ content: '❌ ألعاب الروليت مخصصة فقط في رومات الألعاب المحددة!' }).catch(() => {});
+        }
+
+        const outcomes = [
+            '🎉 مبروك! لقد ربحت **150 نقطة** في الروليت!',
+            '🎉 واو! حظك أسطوري، ربحت **500 نقطة**!',
+            '😢 حظاً أوفر، لقد خسرت رهانك في الروليت.',
+            '🔥 لقد سحبت الحظ الفائز وربحت **1000 نقطة**!'
+        ];
+        const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+
+        let points = userPoints.get(message.author.id) || 0;
+        if (randomOutcome.includes('ربحت')) {
+            const added = randomOutcome.includes('500') ? 500 : (randomOutcome.includes('1000') ? 1000 : 150);
+            points += added;
+        } else {
+            points = Math.max(0, points - 50);
+        }
+        userPoints.set(message.author.id, points);
+
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle('🎰 **District Roulette / لعبة الروليت**')
+            .setDescription(`👤 **اللاعب:** ${message.author}\n\n${randomOutcome}\n🎯 **رصيدك الجديد:** ${points} نقطة`)
+            .setTimestamp();
+
+        return message.channel.send({ embeds: [embed] }).catch(() => {});
+    }
+
+    // أمر الاستعلام عن النقاط: -نقاط أو -رصيدي
+    if (command === '-نقاط' || command === '-رصيدي') {
+        if (!isGameChannel) return;
+        const points = userPoints.get(message.author.id) || 0;
+        return message.reply(`🎯 رصيدك الحالي من نقاط الألعاب هو: **${points} نقطة**`).catch(() => {});
+    }
+
+    // التحقق من الإجابة على لعبة Fizbo النشطة حالياً في الشانل
+    if (isGameChannel && activeGames.has(message.channel.id)) {
+        const currentGame = activeGames.get(message.channel.id);
+        
+        if (message.content.trim() === currentGame.answer) {
+            activeGames.delete(message.channel.id);
+
+            let points = userPoints.get(message.author.id) || 0;
+            points += 20;
+            userPoints.set(message.author.id, points);
+
+            const winEmbed = new EmbedBuilder()
+                .setColor('#00ff00')
+                .setTitle('🏆 **إجابة صحيحة وكفو!**')
+                .setDescription(`كفو ${message.author}! سبقت الجميع وكانت إجابتك صحيحة (\`${currentGame.answer}\`).\n🎯 **تم إضافة 20 نقطة لرصيدك.**\n💎 **إجمالي رصيدك:** ${points} نقطة.`);
+
+            return message.channel.send({ embeds: [winEmbed] }).catch(() => {});
+        }
+    }
+});
+
+// إرسال تحديات ألعاب Fizbo تلقائياً كل فترة في الشانلين
+setInterval(async () => {
+    for (const channelId of GAME_CHANNELS) {
+        const channel = client.channels.cache.get(channelId);
+        if (!channel) continue;
+
+        if (!activeGames.has(channelId)) {
+            const newGame = getRandomGame();
+            activeGames.set(channelId, newGame);
+
+            const gameEmbed = new EmbedBuilder()
+                .setColor('#00ccff')
+                .setTitle('⚡ **تحدي جديد من بوت Communauté**')
+                .setDescription(`${newGame.question}\n\n*(أول شخص يكتب الإجابة الصحيحة في الشات يربح النقاط!)*`)
+                .setTimestamp();
+
+            channel.send({ embeds: [gameEmbed] }).catch(() => {});
+        }
+    }
+}, 50000);
+
+
+// ==========================================
+// 4. الترحيب، المغادرة، التذاكر، وأوامر السلاش
 // ==========================================
 client.on('guildMemberAdd', async member => {
     const channel = member.guild.channels.cache.get(CHANNELS.WELCOME);
@@ -447,8 +540,8 @@ client.on('guildMemberAdd', async member => {
     const embed = new EmbedBuilder()
         .setColor('#2b2d31')
         .setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL({ dynamic: true }) })
-        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓! 🌹')
-        .setDescription(`👋 Welcome ${member}!\n\n🔥 Bienvenue dans notre communauté !\n\n🎮 Choisis tes jeux et partage tes meilleurs moments avec nous.\n\n❤️ مرحبًا بك في عائلة District!\n✨ هنا تبدأ المتعة، الصداقة والتحديات. نتمنى لك إقامة ممتعة معنا! 🏆`)
+        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐂𝐎𝐌𝐌𝐔𝐍𝐀𝐔𝐓𝐄́! 🌹')
+        .setDescription(`👋 Welcome ${member}!\n\n🔥 Bienvenue dans notre communauté !\n\n🎮 Choisis tes jeux et partage tes meilleurs moments avec nous.`)
         .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
         .addFields(
             { name: '👤 MEMBER', value: `${member}`, inline: true },
@@ -468,9 +561,8 @@ client.on('guildMemberRemove', async member => {
     const embed = new EmbedBuilder()
         .setColor('#ff4747')
         .setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL({ dynamic: true }) })
-        .setTitle('👋 Goodbye from District')
+        .setTitle('👋 Goodbye from Communauté')
         .setDescription(`غادر العضو ${member} السيرفر. نتمنى له التوفيق!\n📊 عدد الأعضاء الحالي: **${member.guild.memberCount}**`)
-        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
         .setTimestamp();
 
     await channel.send({ content: `${member}`, embeds: [embed] });
@@ -517,7 +609,7 @@ client.on('interactionCreate', async interaction => {
             const row = new ActionRowBuilder().addComponents(selectMenu);
             const embed = new EmbedBuilder()
                 .setColor('#000000')
-                .setTitle('الدعم الفني - District')
+                .setTitle('الدعم الفني - Communauté')
                 .setDescription('اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.');
 
             await interaction.reply({ embeds: [embed], components: [row] });
@@ -541,7 +633,7 @@ client.on('interactionCreate', async interaction => {
                 new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
                 new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
             );
-            const embed = new EmbedBuilder().setColor('#2b2d31').setTitle('🌟 أهلاً بك في سيرفر District 🌟').setDescription('اضغط على الأزرار بالأسفل لتبدأ!');
+            const embed = new EmbedBuilder().setColor('#2b2d31').setTitle('🌟 أهلاً بك في سيرفر Communauté 🌟').setDescription('اضغط على الأزرار بالأسفل لتبدأ!');
             await interaction.reply({ embeds: [embed], components: [row] });
         }
     }
@@ -599,7 +691,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            await interaction.reply({ content: `🙋‍♂️ تم استلاستلم التذكرة بواسطة ${interaction.member}.` });
+            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${interaction.member}.` });
         }
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة...' });
