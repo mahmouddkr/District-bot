@@ -133,7 +133,7 @@ const messageLogCooldown = new Set();
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ==========================================
-// 1. نظام لوغ السيرفر الشامل (Server Logs) مع التاغ الكامل
+// 1. نظام لوغ السيرفر الشامل (Server Logs)
 // ==========================================
 
 // حظر عضو (Ban)
@@ -211,7 +211,7 @@ client.on('guildAuditLogEntryCreate', async (auditLogEntry, guild) => {
     }
 });
 
-// الأحداث الصوتية في Server Logs (Disconnect, Move, Undeafen, Deafen, Mute)
+// الأحداث الصوتية (Voice States: Disconnect, Move, Undeafen, Deafen, Mute)
 client.on('voiceStateUpdate', async (oldState, newState) => {
     const logChannel = oldState.guild.channels.cache.get(CHANNELS.LOG) || newState.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
@@ -315,7 +315,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 
 // ==========================================
-// 2. نظام لوغ الرتب (Roles Logs) - مع ذكر كل الرولات وتأكيد اسم المشرف مع التاغ
+// 2. نظام لوغ الرتب (Roles Logs) - مع فلترة تحريك الرول المسحوب بيدك فقط
 // ==========================================
 
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
@@ -332,7 +332,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             try {
                 const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
                 const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 10000));
-                if (entry && entry.executor) executor = `<@${entry.executor.id}>`;
+                if (entry?.executor) executor = `<@${entry.executor.id}>`;
             } catch (e) {}
 
             const embed = new EmbedBuilder()
@@ -350,7 +350,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             try {
                 const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
                 const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 10000));
-                if (entry && entry.executor) executor = `<@${entry.executor.id}>`;
+                if (entry?.executor) executor = `<@${entry.executor.id}>`;
             } catch (e) {}
 
             const embed = new EmbedBuilder()
@@ -362,64 +362,93 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     }
 });
 
-// رصد تعديل الرولات وتغيير الأماكن مع جلب اسم المشرف بـ Mention إجباري دقيق
+const roleMoveBuffer = new Map();
+
 client.on('roleUpdate', async (oldRole, newRole) => {
     const logChannel = newRole.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
-    
-    // الانتظار قليلاً لضمان تسجيل المشرف في نظام ديسكورد
-    await wait(1500);
 
-    let executor = 'مشرف غير معروف';
-    try {
-        const logs = await newRole.guild.fetchAuditLogs({ limit: 3, type: AuditLogEvent.RoleUpdate });
-        const entry = logs.entries.find(e => e.target.id === newRole.id && (Date.now() - e.createdTimestamp < 15000));
-        if (entry && entry.executor) {
-            executor = `<@${entry.executor.id}>`;
-        }
-    } catch (e) {}
-
-    let changes = [];
-
-    // فحص تغيير الاسم
-    if (oldRole.name !== newRole.name) {
-        changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
-    }
-
-    // فحص تغيير اللون
-    if (oldRole.hexColor !== newRole.hexColor) {
-        changes.push(`🎨 **تغيير اللون:** من \`${oldRole.hexColor}\` إلى \`${newRole.hexColor}\``);
-    }
-
-    // فحص تغيير مكان الرول (Move Role) - يذكر الرول الذي تغير مكانه مع المشرف
-    if (oldRole.position !== newRole.position) {
-        changes.push(`↕️ **تغيير الموقع (Move Role):** تم تحريك الرول من الترتيب \`${oldRole.position}\` إلى \`${newRole.position}\``);
-    }
-
-    // فحص الصلاحيات المضافة أو المنفية
+    // 1. فحص تعديل الصلاحيات أو الاسم أو اللون
     const oldPerms = new PermissionsBitField(oldRole.permissions.bitfield);
     const newPerms = new PermissionsBitField(newRole.permissions.bitfield);
-
     const addedPerms = newPerms.toArray().filter(p => !oldPerms.has(p));
     const removedPerms = oldPerms.toArray().filter(p => !newPerms.has(p));
 
-    if (addedPerms.length > 0) {
-        changes.push(`✅ **الصلاحيات المضافة:** \`${addedPerms.join(', ')}\``);
+    const hasOtherChanges = 
+        oldRole.name !== newRole.name || 
+        oldRole.hexColor !== newRole.hexColor || 
+        addedPerms.length > 0 || 
+        removedPerms.length > 0;
+
+    if (hasOtherChanges) {
+        await wait(1500);
+        let executor = 'غير مسجل';
+        try {
+            const logs = await newRole.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.RoleUpdate });
+            const entry = logs.entries.find(e => e.target?.id === newRole.id && (Date.now() - e.createdTimestamp < 15000));
+            if (entry?.executor) executor = `<@${entry.executor.id}>`;
+        } catch (e) {}
+
+        let changes = [];
+        if (oldRole.name !== newRole.name) changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
+        if (oldRole.hexColor !== newRole.hexColor) changes.push(`🎨 **تغيير اللون:** من \`${oldRole.hexColor}\` إلى \`${newRole.hexColor}\``);
+        if (addedPerms.length > 0) changes.push(`✅ **الصلاحيات المضافة:** \`${addedPerms.join(', ')}\``);
+        if (removedPerms.length > 0) changes.push(`❌ **الصلاحيات المنفية (المزالة):** \`${removedPerms.join(', ')}\``);
+
+        const embed = new EmbedBuilder()
+            .setTitle('🛠️ **Role Updated / تعديل رول**')
+            .setDescription(`🏷️ **الرول المعدل:** ${newRole}\n\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
+            .setColor('#ffa500')
+            .setTimestamp();
+
+        logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    if (removedPerms.length > 0) {
-        changes.push(`❌ **الصلاحيات المنفية (المزالة):** \`${removedPerms.join(', ')}\``);
+    // 2. فحص تحريك مكان الرول (Move Role) - يذكر الرول المسحوب بيدك فقط
+    if (oldRole.position !== newRole.position) {
+        const guildId = newRole.guild.id;
+        
+        if (!roleMoveBuffer.has(guildId)) {
+            roleMoveBuffer.set(guildId, []);
+            
+            setTimeout(async () => {
+                const moves = roleMoveBuffer.get(guildId) || [];
+                roleMoveBuffer.delete(guildId);
+                if (moves.length === 0) return;
+
+                // اختيار الرول صاحب أكبر مسافة حركة (الرول الذي تم سحبه باليد)
+                moves.sort((a, b) => Math.abs(b.newPos - b.oldPos) - Math.abs(a.newPos - a.oldPos));
+                const mainMovedRole = moves[0];
+
+                let executor = 'غير مسجل (ديسكورد لا يرسل اسم المشرف عند تحريك الرولات)';
+                try {
+                    const logs = await newRole.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.RoleUpdate });
+                    const entry = logs.entries.find(e => (Date.now() - e.createdTimestamp < 15000));
+                    if (entry?.executor) executor = `<@${entry.executor.id}>`;
+                } catch (e) {}
+
+                const embed = new EmbedBuilder()
+                    .setTitle('↕️ **Role Moved / تغيير مكان رول**')
+                    .setDescription(`🏷️ **الرول المتحرك:** ${mainMovedRole.role}\n📊 **الترتيب:** من \`${mainMovedRole.oldPos}\` إلى \`${mainMovedRole.newPos}\`\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
+                    .setColor('#3498db')
+                    .setTimestamp();
+
+                logChannel.send({ embeds: [embed] }).catch(() => {});
+            }, 2000);
+        }
+
+        const currentMoves = roleMoveBuffer.get(guildId);
+        const existing = currentMoves.find(m => m.role.id === newRole.id);
+        if (existing) {
+            existing.newPos = newRole.position;
+        } else {
+            currentMoves.push({
+                role: newRole,
+                oldPos: oldRole.position,
+                newPos: newRole.position
+            });
+        }
     }
-
-    if (changes.length === 0) return;
-
-    const embed = new EmbedBuilder()
-        .setTitle('🛠️ **Role Updated / تعديل رول**')
-        .setDescription(`🏷️ **الرول المعدل:** ${newRole}\n\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
-        .setColor('#ffa500')
-        .setTimestamp();
-
-    logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
 
