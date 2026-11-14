@@ -15,7 +15,21 @@ const {
 const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const express = require('express');
 
-// خادم ويب لبقاء البوت شغال 24/7 على Render
+// ==========================================
+// 🛡️ نظام الحماية المتقدم لمنع انطفاء البوت (Anti-Crash)
+// هذا النظام يمنع السكربت من التوقف حتى لو حدث خطأ فادح أو مفاجئ
+// ==========================================
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('⚠️ [Anti-Crash] Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+    console.error('⚠️ [Anti-Crash] Uncaught Exception:', err);
+});
+process.on('uncaughtExceptionMonitor', (err, origin) => {
+    console.error('⚠️ [Anti-Crash] Uncaught Exception Monitor:', err, origin);
+});
+
+// خادم ويب لبقاء البوت شغال 24/7 في السحاب (حتى لو أغلقت هاتفك والبيسي)
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -24,7 +38,7 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is listening on port ${PORT}`);
+    console.log(`🌐 Web server is listening on port ${PORT}`);
 });
 
 const client = new Client({
@@ -44,7 +58,7 @@ const client = new Client({
 const invitesCache = new Map();
 
 client.on('ready', async () => {
-    console.log(`Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
+    console.log(`✅ Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
     client.user.setActivity('Communauté Server', { type: 3 });
 
     // جلب وحفظ دعوات السيرفر عند الإقلاع
@@ -68,7 +82,7 @@ client.on('ready', async () => {
 
     try {
         await client.application.commands.set(commands);
-        console.log('Successfully registered all Slash Commands.');
+        console.log('✨ Successfully registered all Slash Commands.');
     } catch (error) {
         console.error('Error registering slash commands:', error);
     }
@@ -328,9 +342,8 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
 
 
 // ==========================================
-// 2. نظام لوغ الرتب الشامل (Roles Logs) مع تتبع تعديل الأسماء والألوان والصلاحيات
+// 2. نظام لوغ الرتب الشامل (Roles Logs)
 // ==========================================
-
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
@@ -413,7 +426,6 @@ client.on('roleDelete', async role => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// تتبع تعديل الرولات (الاسم، اللون، الصلاحيات) مع معرفة من قام بذلك
 client.on('roleUpdate', async (oldRole, newRole) => {
     const logChannel = newRole.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
@@ -429,23 +441,15 @@ client.on('roleUpdate', async (oldRole, newRole) => {
     } catch (e) {}
 
     let changes = [];
-
-    // فحص تغيير الاسم
     if (oldRole.name !== newRole.name) {
         changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
     }
-
-    // فحص تغيير اللون
     if (oldRole.hexColor !== newRole.hexColor) {
         changes.push(`🎨 **تغيير اللون:** من \`${oldRole.hexColor}\` إلى \`${newRole.hexColor}\``);
     }
-
-    // فحص تغيير الصلاحيات
     if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) {
         changes.push(`⚡ **تغيير الصلاحيات:** تم تعديل صلاحيات الرول.`);
     }
-
-    // إذا لم تكن هناك تغييرات رئيسية تم رصدها، نكتفي بتنبيه عام
     if (changes.length === 0) {
         changes.push(`✏️ **تعديل عام:** تم تحديث إعدادات الرول.`);
     }
@@ -461,7 +465,7 @@ client.on('roleUpdate', async (oldRole, newRole) => {
 
 
 // ==========================================
-// 3. الترحيب، المغادرة، أوامر السلاش، التذاكر، والألعاب
+// 3. الترحيب، المغادرة، الأوامر، والتذاكر
 // ==========================================
 client.on('guildMemberAdd', async member => {
     const channel = member.guild.channels.cache.get(CHANNELS.WELCOME);
@@ -636,7 +640,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${interaction.member}.` });
+            await interaction.reply({ content: `🙋‍♂️ تم استلاستلمت التذكرة بواسطة ${interaction.member}.` });
         }
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة...' });
