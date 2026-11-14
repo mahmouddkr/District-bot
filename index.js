@@ -485,32 +485,32 @@ client.on('guildMemberRemove', async member => {
     await channel.send({ content: `${member}`, embeds: [embed] });
 });
 
-// خريطة الإيموجيات لرتب الألعاب (Reaction Roles)
+// خريطة الإيموجيات المخصصة للألعاب (Reaction Roles) بالأسماء والأيدي الصحيحة
 const reactionRoleMap = {
-    '🇨🇸': ROLES.GAMES.cs2,
-    '🇻🇦': ROLES.GAMES.valo,
-    '🇫🇳': ROLES.GAMES.fortnite,
+    'cs2': ROLES.GAMES.cs2,
+    'VALO': ROLES.GAMES.valo,
+    'fortnite': ROLES.GAMES.fortnite,
     '🔥': ROLES.GAMES.fire,
-    '🚀': ROLES.GAMES.rocket,
-    '👾': ROLES.GAMES.amongus,
-    '⛏️': ROLES.GAMES.minecraft,
-    '🤖': ROLES.GAMES.roblox,
+    'Rocket_Leauge': ROLES.GAMES.rocket,
+    'Amongus': ROLES.GAMES.amongus,
+    'minecraft': ROLES.GAMES.minecraft,
+    'ROBLOX': ROLES.GAMES.roblox,
     '⚽': ROLES.GAMES.soccer,
     '🚗': ROLES.GAMES.bluecar,
-    '🏟️': ROLES.GAMES.pes,
+    'efootbal': ROLES.GAMES.pes,
     '🏎️': ROLES.GAMES.racecar,
-    '🖥️': ROLES.GAMES.fivem
+    'FIVEM': ROLES.GAMES.fivem
 };
 
-// إضافة الرول عند وضع التفاعل
+// إضافة الرول عند وضع التفاعل بالإيموجي المخصص
 client.on('messageReactionAdd', async (reaction, user) => {
     if (user.bot) return;
     if (reaction.partial) await reaction.fetch().catch(() => {});
     if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
     if (reaction.message.channel.id === CHANNELS.GAMES_ROLES) {
-        const emoji = reaction.emoji.name;
-        const roleId = reactionRoleMap[emoji];
+        const emojiName = reaction.emoji.name;
+        const roleId = reactionRoleMap[emojiName];
         if (!roleId) return;
 
         const guild = reaction.message.guild;
@@ -528,8 +528,8 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
     if (reaction.message.channel.id === CHANNELS.GAMES_ROLES) {
-        const emoji = reaction.emoji.name;
-        const roleId = reactionRoleMap[emoji];
+        const emojiName = reaction.emoji.name;
+        const roleId = reactionRoleMap[emojiName];
         if (!roleId) return;
 
         const guild = reaction.message.guild;
@@ -540,7 +540,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
     }
 });
 
-// معالجة الأوامر والتذاكر بدقة عالية ومنع خطأ التوقف
+// معالجة الأوامر والتذاكر بدقة عالية
 client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName, member, guild } = interaction;
@@ -569,7 +569,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // أمر /ticket (Embed أسود، صورة، وحقوق District Server © 2026)
+        // أمر /ticket (Embed أسود، صورة، بدون حقوق District Server © 2026)
         if (commandName === 'ticket') {
             if (interaction.channel.id !== CHANNELS.TICKET_SETUP) {
                 return interaction.reply({ content: '❌ استخدم هذا الأمر في روم التذاكر المحدد!', ephemeral: true });
@@ -592,13 +592,12 @@ client.on('interactionCreate', async interaction => {
                 .setColor('#000000') // أسود
                 .setTitle('الدعم الفني - District')
                 .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
-                .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&')
-                .setFooter({ text: 'District Server © 2026' });
+                .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
 
             await interaction.editReply({ embeds: [embed], components: [row] });
         }
 
-        // أمر /setup-roles (التصميم المطلوب بالنص والإطار)
+        // أمر /setup-roles (يرسل في Embed مثل الصورة الأولى تماماً)
         if (commandName === 'setup-roles') {
             if (interaction.channel.id !== CHANNELS.STATIC_ROLES) {
                 return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
@@ -606,15 +605,16 @@ client.on('interactionCreate', async interaction => {
             
             await interaction.deferReply({ ephemeral: true });
 
-            const textContent = 
-`╔════════════════════════════════╗\n` +
-`      🌟 أهلاً بك في سيرفر 🌹District  🌟\n` +
-`╚════════════════════════════════╝\n` +
-`مرحباً بك يا صديقي في مجتمعنا!\n\n` +
-`✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n` +
-`🔵 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر لفتح الشات العام والتفاعل بحرية.\n` +
-`🎮 **Mini Games** : رول خاص بمحبي الألعاب للمشاركة في التحديات والفعاليات المصغرة\n\n` +
-`👇 اضغط على الأزرار بالأسفل لتتبدأ معنا!`;
+            const embed = new EmbedBuilder()
+                .setColor('#2b2d31')
+                .setTitle('🌟 أهلاً بك في سيرفر 🌹 District 🌟')
+                .setDescription(
+                    'مرحباً بك يا صديقي في مجتمعنا!\n\n' +
+                    '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n' +
+                    '🔵 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر لفتح الشات العام والتفاعل بحرية.\n' +
+                    '🎮 **Mini Games** : رول خاص بمحبي الألعاب للمشاركة في التحديات والفعاليات المصغرة\n\n' +
+                    'اضغط على الأزرار بالأسفل لتبدأ معنا! 👇'
+                );
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('role_districtian').setLabel('Districtian 🔵').setStyle(ButtonStyle.Primary),
@@ -622,10 +622,10 @@ client.on('interactionCreate', async interaction => {
                 new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
             );
 
-            await interaction.editReply({ content: textContent, components: [row] });
+            await interaction.editReply({ embeds: [embed], components: [row] });
         }
 
-        // أمر /games-roles (مسح الروم وإرسال القائمة والأسهم والمنشنات بدقة)
+        // أمر /games-roles (يرسل في Embed مع إيموجيات ديسكورد والريأكشنات المطلوبة)
         if (commandName === 'games-roles') {
             if (interaction.channel.id !== CHANNELS.GAMES_ROLES) {
                 return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
@@ -639,36 +639,52 @@ client.on('interactionCreate', async interaction => {
                 await interaction.channel.bulkDelete(fetched, true).catch(() => {});
             } catch (e) {}
 
-            const gamesMessageText = 
-`et récupère tes rôles ! 🎯🔥
+            const embed = new EmbedBuilder()
+                .setColor('#2b2d31')
+                .setDescription(
+                    `et récupère tes rôles ! 🎯🔥\n\n` +
+                    `🌹 اختر ألعابك المفضلة واحصل \n` +
+                    `على رتبها تلقائيًا ! 🎮⚡\n\n` +
+                    `𝑮𝒂𝒎𝒆𝒔 <a:00000_purple_moon:1462859469699551314>\n` +
+                    `<:cs2:1452670171738275910> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.cs2}>\n` +
+                    `<a:VALO:1452363572679016568> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.valo}>\n` +
+                    `<:fortnite:1488994596141924534> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fortnite}>\n` +
+                    `🔥 <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fire}>\n` +
+                    `<:Rocket_Leauge:1488994687363842098> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.rocket}>\n` +
+                    `<:Amongus:1489036461427654697> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.amongus}>\n` +
+                    `<:minecraft:1452670793539391559> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.minecraft}>\n` +
+                    `<:ROBLOX:1452605848881987758> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.roblox}>\n` +
+                    `⚽️ <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.soccer}>\n` +
+                    `🚙 <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.bluecar}>\n` +
+                    `<:efootbal:1451987881429045290> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.pes}>\n` +
+                    `🏎️ <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.racecar}>\n` +
+                    `<a:FIVEM:1452363350808858654> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fivem}>`
+                );
 
-🌹 اختر ألعابك المفضلة واحصل 
-على رتبها تلقائيًا ! 🎮⚡
-
-𝑮𝒂𝒎𝒆𝒔 <a:00000_purple_moon:1462859469699551314>
-<:cs2:1452670171738275910> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.cs2}>
-<a:VALO:1452363572679016568> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.valo}>
-<:fortnite:1488994596141924534> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fortnite}> 
-🔥 <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fire}>
-<:Rocket_Leauge:1488994687363842098> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.rocket}>
-<:Amongus:1489036461427654697> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.amongus}>
-<:minecraft:1452670793539391559> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.minecraft}>
-<:ROBLOX:1452605848881987758> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.roblox}>
-⚽️ <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.soccer}>
-🚙 <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.bluecar}>
-<:efootbal:1451987881429045290> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.pes}>
-🏎️ <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.racecar}>
-<a:FIVEM:1452363350808858654> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fivem}>`;
-
-            const sentMsg = await interaction.channel.send({ content: gamesMessageText });
+            const sentMsg = await interaction.channel.send({ embeds: [embed] });
             
-            // إضافة التفاعلات الـ 13 تلقائياً للرسالة
-            const emojis = ['🇨🇸', '🇻🇦', '🇫🇳', '🔥', '🚀', '👾', '⛏️', '🤖', '⚽', '🚗', '🏟️', '🏎️', '🖥️'];
-            for (const emoji of emojis) {
-                await sentMsg.react(emoji).catch(() => {});
+            // إضافة التفاعلات الـ 13 بالإيموجيات المخصصة ديسكورد
+            const customEmojis = [
+                '1452670171738275910', // cs2
+                '1452363572679016568', // VALO
+                '1488994596141924534', // fortnite
+                '🔥',                   // fire
+                '1488994687363842098', // Rocket_Leauge
+                '1489036461427654697', // Amongus
+                '1452670793539391559', // minecraft
+                '1452605848881987758', // ROBLOX
+                '⚽',                   // soccer
+                '🚗',                   // bluecar
+                '1451987881429045290', // efootbal
+                '🏎️',                  // racecar
+                '1452363350808858654'  // FIVEM
+            ];
+
+            for (const em of customEmojis) {
+                await sentMsg.react(em).catch(() => {});
             }
 
-            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب وتفعيل التفاعلات بنجاح!' });
+            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب داخل Embed وتفعيل التفاعلات بنجاح!' });
         }
     }
 
