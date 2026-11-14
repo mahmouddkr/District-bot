@@ -17,7 +17,6 @@ const express = require('express');
 
 // ==========================================
 // 🛡️ نظام الحماية المتقدم لمنع انطفاء البوت (Anti-Crash)
-// هذا النظام يمنع السكربت من التوقف حتى لو حدث خطأ فادح أو مفاجئ
 // ==========================================
 process.on('unhandledRejection', (reason, promise) => {
     console.error('⚠️ [Anti-Crash] Unhandled Rejection:', reason);
@@ -29,7 +28,7 @@ process.on('uncaughtExceptionMonitor', (err, origin) => {
     console.error('⚠️ [Anti-Crash] Uncaught Exception Monitor:', err, origin);
 });
 
-// خادم ويب لبقاء البوت شغال 24/7 في السحاب (حتى لو أغلقت هاتفك والبيسي)
+// خادم ويب لبقاء البوت شغال 24/7 في السحاب
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -59,7 +58,9 @@ const invitesCache = new Map();
 
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
-    client.user.setActivity('Communauté Server', { type: 3 });
+    
+    // تم تغيير الحالة هنا إلى District 🌹
+    client.user.setActivity('District 🌹', { type: 3 });
 
     // جلب وحفظ دعوات السيرفر عند الإقلاع
     for (const guild of client.guilds.cache.values()) {
@@ -640,7 +641,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            await interaction.reply({ content: `🙋‍♂️ تم استلاستلمت التذكرة بواسطة ${interaction.member}.` });
+            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${interaction.member}.` });
         }
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة...' });
