@@ -611,13 +611,13 @@ client.on('interactionCreate', async interaction => {
                 .setDescription(
                     'مرحباً بك يا صديقي في مجتمعنا!\n\n' +
                     '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n' +
-                    '🔵 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر لفتح الشات العام والتفاعل بحرية.\n' +
+                    '🌌 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر لفتح الشات العام والتفاعل بحرية.\n' +
                     '🎮 **Mini Games** : رول خاص بمحبي الألعاب للمشاركة في التحديات والفعاليات المصغرة\n\n' +
                     'اضغط على الأزرار بالأسفل لتبدأ معنا! 👇'
                 );
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('role_districtian').setLabel('Districtian 🌌').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId('role_districtian').setLabel(' 🌌 Districtian').setStyle(ButtonStyle.Primary),
                 new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
                 new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
             );
