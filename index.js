@@ -485,21 +485,21 @@ client.on('guildMemberRemove', async member => {
     await channel.send({ content: `${member}`, embeds: [embed] });
 });
 
-// خريطة الإيموجيات المخصصة للألعاب (Reaction Roles) بالأسماء والأيدي الصحيحة
+// خريطة الإيموجيات المخصصة للألعاب (Reaction Roles) - المفتاح هو أيدي أو رمز الإيموجي والقيمة هي أيدي الرول
 const reactionRoleMap = {
-    'cs2': ROLES.GAMES.cs2,
-    'VALO': ROLES.GAMES.valo,
-    'fortnite': ROLES.GAMES.fortnite,
-    '🔥': ROLES.GAMES.fire,
-    'Rocket_Leauge': ROLES.GAMES.rocket,
-    'Amongus': ROLES.GAMES.amongus,
-    'minecraft': ROLES.GAMES.minecraft,
-    'ROBLOX': ROLES.GAMES.roblox,
-    '⚽': ROLES.GAMES.soccer,
-    '🚗': ROLES.GAMES.bluecar,
-    'efootbal': ROLES.GAMES.pes,
-    '🏎️': ROLES.GAMES.racecar,
-    'FIVEM': ROLES.GAMES.fivem
+    '1452670171738275910': ROLES.GAMES.cs2,       // cs2
+    '1452363572679016568': ROLES.GAMES.valo,      // valo
+    '1488994596141924534': ROLES.GAMES.fortnite,  // fortnite
+    '🔥': ROLES.GAMES.fire,                       // fire
+    '1488994687363842098': ROLES.GAMES.rocket,    // rocket
+    '1489036461427654697': ROLES.GAMES.amongus,   // amongus
+    '1452670793539391559': ROLES.GAMES.minecraft, // minecraft
+    '1452605848881987758': ROLES.GAMES.roblox,    // roblox
+    '⚽': ROLES.GAMES.soccer,                     // soccer
+    '🚗': ROLES.GAMES.bluecar,                    // bluecar
+    '1451987881429045290': ROLES.GAMES.pes,       // pes
+    '🏎️': ROLES.GAMES.racecar,                   // racecar
+    '1452363350808858654': ROLES.GAMES.fivem      // fivem
 };
 
 // إضافة الرول عند وضع التفاعل بالإيموجي المخصص
@@ -509,8 +509,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
     if (reaction.message.channel.id === CHANNELS.GAMES_ROLES) {
-        const emojiName = reaction.emoji.name;
-        const roleId = reactionRoleMap[emojiName];
+        const emojiKey = reaction.emoji.id || reaction.emoji.name;
+        const roleId = reactionRoleMap[emojiKey];
         if (!roleId) return;
 
         const guild = reaction.message.guild;
@@ -528,8 +528,8 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
     if (reaction.message.channel.id === CHANNELS.GAMES_ROLES) {
-        const emojiName = reaction.emoji.name;
-        const roleId = reactionRoleMap[emojiName];
+        const emojiKey = reaction.emoji.id || reaction.emoji.name;
+        const roleId = reactionRoleMap[emojiKey];
         if (!roleId) return;
 
         const guild = reaction.message.guild;
@@ -569,7 +569,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // أمر /ticket (Embed أسود، صورة، بدون حقوق District Server © 2026)
+        // أمر /ticket
         if (commandName === 'ticket') {
             if (interaction.channel.id !== CHANNELS.TICKET_SETUP) {
                 return interaction.reply({ content: '❌ استخدم هذا الأمر في روم التذاكر المحدد!', ephemeral: true });
@@ -589,7 +589,7 @@ client.on('interactionCreate', async interaction => {
             const row = new ActionRowBuilder().addComponents(selectMenu);
             
             const embed = new EmbedBuilder()
-                .setColor('#000000') // أسود
+                .setColor('#000000')
                 .setTitle('الدعم الفني - District')
                 .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
                 .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
@@ -597,7 +597,7 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ embeds: [embed], components: [row] });
         }
 
-        // أمر /setup-roles (يرسل في Embed مثل الصورة الأولى تماماً)
+        // أمر /setup-roles
         if (commandName === 'setup-roles') {
             if (interaction.channel.id !== CHANNELS.STATIC_ROLES) {
                 return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
@@ -617,7 +617,7 @@ client.on('interactionCreate', async interaction => {
                 );
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('role_districtian').setLabel('Districtian 🔵').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId('role_districtian').setLabel('Districtian 🌌').setStyle(ButtonStyle.Primary),
                 new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
                 new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
             );
@@ -625,7 +625,7 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ embeds: [embed], components: [row] });
         }
 
-        // أمر /games-roles (يرسل في Embed مع إيموجيات ديسكورد والريأكشنات المطلوبة)
+        // أمر /games-roles
         if (commandName === 'games-roles') {
             if (interaction.channel.id !== CHANNELS.GAMES_ROLES) {
                 return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
@@ -642,9 +642,8 @@ client.on('interactionCreate', async interaction => {
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
                 .setDescription(
-                    `et récupère tes rôles ! 🎯🔥\n\n` +
-                    `🌹 اختر ألعابك المفضلة واحصل \n` +
-                    `على رتبها تلقائيًا ! 🎮⚡\n\n` +
+                    `Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n\n` +
+                    `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
                     `𝑮𝒂𝒎𝒆𝒔 <a:00000_purple_moon:1462859469699551314>\n` +
                     `<:cs2:1452670171738275910> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.cs2}>\n` +
                     `<a:VALO:1452363572679016568> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.valo}>\n` +
@@ -663,24 +662,9 @@ client.on('interactionCreate', async interaction => {
 
             const sentMsg = await interaction.channel.send({ embeds: [embed] });
             
-            // إضافة التفاعلات الـ 13 بالإيموجيات المخصصة ديسكورد
-            const customEmojis = [
-                '1452670171738275910', // cs2
-                '1452363572679016568', // VALO
-                '1488994596141924534', // fortnite
-                '🔥',                   // fire
-                '1488994687363842098', // Rocket_Leauge
-                '1489036461427654697', // Amongus
-                '1452670793539391559', // minecraft
-                '1452605848881987758', // ROBLOX
-                '⚽',                   // soccer
-                '🚗',                   // bluecar
-                '1451987881429045290', // efootbal
-                '🏎️',                  // racecar
-                '1452363350808858654'  // FIVEM
-            ];
-
-            for (const em of customEmojis) {
+            // إضافة التفاعلات الـ 13 تلقائياً باستخدام مفاتيح خريطة الإيموجيات
+            const emojiKeys = Object.keys(reactionRoleMap);
+            for (const em of emojiKeys) {
                 await sentMsg.react(em).catch(() => {});
             }
 
