@@ -86,12 +86,6 @@ const CHANNELS = {
     GAMES_ROLES: '1560471208766476298'     // روم رتب الألعاب
 };
 
-// الأيدي الخاصة بالشانلات المخصصة لألعاب Fizbo
-const GAME_CHANNELS = [
-    '1560721542617239602',
-    '1560501807602606121'
-];
-
 // الأيدي الخاصة بالرتب للصلاحيات والتسليم
 const ROLES = {
     STAFF_SUPPORT: '1561461730545115276', // رول الدعم
@@ -118,45 +112,9 @@ const ROLES = {
     }
 };
 
-// حماية التكرار والسبام للوغ والنقاط
 const voiceCooldown = new Set();
 const roleCooldown = new Set();
 const messageLogCooldown = new Set();
-const userPoints = new Map();
-const activeGames = new Map();
-
-// مكتبة ألعاب Fizbo (فكك، عواصم، رياضيات)
-const wordGames = [
-    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **م د ر س ة**', answer: 'مدرسة' },
-    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **ب ر م ج ة**', answer: 'برمجة' },
-    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **د ي س ك و ر د**', answer: 'ديسكورد' },
-    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **س ي ر ف ر**', answer: 'سيرفر' },
-    { question: '🔤 أسرع واكتب الكلمة مبعثرة: **ت ح د ي**', answer: 'تحدي' }
-];
-
-const capitalGames = [
-    { question: '🌍 ما هي عاصمة **الجزائر**؟', answer: 'الجزائر' },
-    { question: '🌍 ما هي عاصمة **فرنسا**؟', answer: 'باريس' },
-    { question: '🌍 ما هي عاصمة **المملكة العربية السعودية**؟', answer: 'الرياض' },
-    { question: '🌍 ما هي عاصمة **إسبانيا**؟', answer: 'مدريد' },
-    { question: '🌍 ما هي عاصمة **إيطاليا**؟', answer: 'روما' }
-];
-
-const mathGames = [
-    { question: '🔢 كم الناتج الحسابي؟ **15 + 25 = ?**', answer: '40' },
-    { question: '🔢 كم الناتج الحسابي؟ **8 × 7 = ?**', answer: '56' },
-    { question: '🔢 كم الناتج الحسابي؟ **100 - 35 = ?**', answer: '65' },
-    { question: '🔢 كم الناتج الحسابي؟ **12 × 12 = ?**', answer: '144' }
-];
-
-function getRandomGame() {
-    const types = ['word', 'capital', 'math'];
-    const selectedType = types[Math.floor(Math.random() * types.length)];
-    
-    if (selectedType === 'word') return { type: 'word', ...wordGames[Math.floor(Math.random() * wordGames.length)] };
-    if (selectedType === 'capital') return { type: 'capital', ...capitalGames[Math.floor(Math.random() * capitalGames.length)] };
-    return { type: 'math', ...mathGames[Math.floor(Math.random() * mathGames.length)] };
-}
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -334,16 +292,48 @@ client.on('channelDelete', async channel => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
+client.on('messageDelete', async message => {
+    if (!message.guild || message.author?.bot) return;
+    const logChannel = message.guild.channels.cache.get(CHANNELS.LOG);
+    if (!logChannel) return;
+
+    const mKey = `del-${message.id}`;
+    if (messageLogCooldown.has(mKey)) return;
+    messageLogCooldown.add(mKey);
+    setTimeout(() => messageLogCooldown.delete(mKey), 5000);
+
+    const logEmbed = new EmbedBuilder()
+        .setTitle('🗑️ **Message Deleted / حذف رسالة**')
+        .setDescription(`👤 **صاحب الرسالة:** ${message.author}\n📌 **في روم:** ${message.channel}\n💬 **المحتوى:** \`${message.content || 'None'}\``)
+        .setColor('#ff0000').setTimestamp();
+    logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+});
+
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+    if (!oldMessage.guild || oldMessage.author?.bot || oldMessage.content === newMessage.content) return;
+    const logChannel = oldMessage.guild.channels.cache.get(CHANNELS.LOG);
+    if (!logChannel) return;
+
+    const mKey = `edit-${newMessage.id}`;
+    if (messageLogCooldown.has(mKey)) return;
+    messageLogCooldown.add(mKey);
+    setTimeout(() => messageLogCooldown.delete(mKey), 5000);
+
+    const logEmbed = new EmbedBuilder()
+        .setTitle('✏️ **Message Edited / تعديل رسالة**')
+        .setDescription(`👤 **صاحب الرسالة:** ${oldMessage.author}\n📌 **في روم:** ${oldMessage.channel}\n\n**قبل:** \`${oldMessage.content}\`\n**بعد:** \`${newMessage.content}\``)
+        .setColor('#ffa500').setTimestamp();
+    logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+});
+
 
 // ==========================================
-// 2. نظام لوغ الرتب الشامل (Roles Logs)
+// 2. نظام لوغ الرتب الشامل (Roles Logs) مع تتبع تعديل الأسماء والألوان والصلاحيات
 // ==========================================
+
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
-
-    // أولاً: فحص ألعاب Fizbo المكتوبة في الشات (إذا حدث تحديث رتب)
-    const isGameChannel = GAME_CHANNELS.includes(newMember.id); // للاحتياط
 
     const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
     const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
@@ -423,101 +413,55 @@ client.on('roleDelete', async role => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
+// تتبع تعديل الرولات (الاسم، اللون، الصلاحيات) مع معرفة من قام بذلك
+client.on('roleUpdate', async (oldRole, newRole) => {
+    const logChannel = newRole.guild.channels.cache.get(CHANNELS.ROLES_LOG);
+    if (!logChannel) return;
+    await wait(1200);
 
-// ==========================================
-// 3. نظام ألعاب Fizbo والترفيه في الشات (الروليت، النقاط، والحدس)
-// ==========================================
-client.on('messageCreate', async message => {
-    if (message.author.bot || !message.guild) return;
-
-    const isGameChannel = GAME_CHANNELS.includes(message.channel.id);
-    const args = message.content.trim().split(/ +/);
-    const command = args[0].toLowerCase();
-
-    // أمر الروليت: -روليت
-    if (command === '-روليت') {
-        if (!isGameChannel) {
-            return message.reply({ content: '❌ ألعاب الروليت مخصصة فقط في رومات الألعاب المحددة!' }).catch(() => {});
+    let executor = 'مشرف غير معروف';
+    try {
+        const logs = await newRole.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.RoleUpdate });
+        const entry = logs.entries.first();
+        if (entry && entry.target.id === newRole.id) {
+            executor = `${entry.executor.tag}`;
         }
+    } catch (e) {}
 
-        const outcomes = [
-            '🎉 مبروك! لقد ربحت **150 نقطة** في الروليت!',
-            '🎉 واو! حظك أسطوري، ربحت **500 نقطة**!',
-            '😢 حظاً أوفر، لقد خسرت رهانك في الروليت.',
-            '🔥 لقد سحبت الحظ الفائز وربحت **1000 نقطة**!'
-        ];
-        const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+    let changes = [];
 
-        let points = userPoints.get(message.author.id) || 0;
-        if (randomOutcome.includes('ربحت')) {
-            const added = randomOutcome.includes('500') ? 500 : (randomOutcome.includes('1000') ? 1000 : 150);
-            points += added;
-        } else {
-            points = Math.max(0, points - 50);
-        }
-        userPoints.set(message.author.id, points);
-
-        const embed = new EmbedBuilder()
-            .setColor('#ffd700')
-            .setTitle('🎰 **District Roulette / لعبة الروليت**')
-            .setDescription(`👤 **اللاعب:** ${message.author}\n\n${randomOutcome}\n🎯 **رصيدك الجديد:** ${points} نقطة`)
-            .setTimestamp();
-
-        return message.channel.send({ embeds: [embed] }).catch(() => {});
+    // فحص تغيير الاسم
+    if (oldRole.name !== newRole.name) {
+        changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
     }
 
-    // أمر الاستعلام عن النقاط: -نقاط أو -رصيدي
-    if (command === '-نقاط' || command === '-رصيدي') {
-        if (!isGameChannel) return;
-        const points = userPoints.get(message.author.id) || 0;
-        return message.reply(`🎯 رصيدك الحالي من نقاط الألعاب هو: **${points} نقطة**`).catch(() => {});
+    // فحص تغيير اللون
+    if (oldRole.hexColor !== newRole.hexColor) {
+        changes.push(`🎨 **تغيير اللون:** من \`${oldRole.hexColor}\` إلى \`${newRole.hexColor}\``);
     }
 
-    // التحقق من الإجابة على لعبة Fizbo النشطة حالياً في الشانل
-    if (isGameChannel && activeGames.has(message.channel.id)) {
-        const currentGame = activeGames.get(message.channel.id);
-        
-        if (message.content.trim() === currentGame.answer) {
-            activeGames.delete(message.channel.id);
-
-            let points = userPoints.get(message.author.id) || 0;
-            points += 20;
-            userPoints.set(message.author.id, points);
-
-            const winEmbed = new EmbedBuilder()
-                .setColor('#00ff00')
-                .setTitle('🏆 **إجابة صحيحة وكفو!**')
-                .setDescription(`كفو ${message.author}! سبقت الجميع وكانت إجابتك صحيحة (\`${currentGame.answer}\`).\n🎯 **تم إضافة 20 نقطة لرصيدك.**\n💎 **إجمالي رصيدك:** ${points} نقطة.`);
-
-            return message.channel.send({ embeds: [winEmbed] }).catch(() => {});
-        }
+    // فحص تغيير الصلاحيات
+    if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) {
+        changes.push(`⚡ **تغيير الصلاحيات:** تم تعديل صلاحيات الرول.`);
     }
+
+    // إذا لم تكن هناك تغييرات رئيسية تم رصدها، نكتفي بتنبيه عام
+    if (changes.length === 0) {
+        changes.push(`✏️ **تعديل عام:** تم تحديث إعدادات الرول.`);
+    }
+
+    const embed = new EmbedBuilder()
+        .setTitle('🛠️ **Role Updated / تعديل رول**')
+        .setDescription(`🏷️ **الرول:** ${newRole}\n\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
+        .setColor('#ffa500')
+        .setTimestamp();
+
+    logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// إرسال تحديات ألعاب Fizbo تلقائياً كل فترة في الشانلين
-setInterval(async () => {
-    for (const channelId of GAME_CHANNELS) {
-        const channel = client.channels.cache.get(channelId);
-        if (!channel) continue;
-
-        if (!activeGames.has(channelId)) {
-            const newGame = getRandomGame();
-            activeGames.set(channelId, newGame);
-
-            const gameEmbed = new EmbedBuilder()
-                .setColor('#00ccff')
-                .setTitle('⚡ **تحدي جديد من بوت Communauté**')
-                .setDescription(`${newGame.question}\n\n*(أول شخص يكتب الإجابة الصحيحة في الشات يربح النقاط!)*`)
-                .setTimestamp();
-
-            channel.send({ embeds: [gameEmbed] }).catch(() => {});
-        }
-    }
-}, 50000);
-
 
 // ==========================================
-// 4. الترحيب، المغادرة، التذاكر، وأوامر السلاش
+// 3. الترحيب، المغادرة، أوامر السلاش، التذاكر، والألعاب
 // ==========================================
 client.on('guildMemberAdd', async member => {
     const channel = member.guild.channels.cache.get(CHANNELS.WELCOME);
@@ -540,8 +484,8 @@ client.on('guildMemberAdd', async member => {
     const embed = new EmbedBuilder()
         .setColor('#2b2d31')
         .setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL({ dynamic: true }) })
-        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐂𝐎𝐌𝐌𝐔𝐍𝐀𝐔𝐓𝐄́! 🌹')
-        .setDescription(`👋 Welcome ${member}!\n\n🔥 Bienvenue dans notre communauté !\n\n🎮 Choisis tes jeux et partage tes meilleurs moments avec nous.`)
+        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓! 🌹')
+        .setDescription(`👋 Welcome ${member}!\n\n🔥 Bienvenue dans notre communauté !\n\n🎮 Choisis tes jeux et partage tes meilleurs moments avec nous.\n\n❤️ مرحبًا بك في عائلة District!\n✨ هنا تبدأ المتعة، الصداقة والتحديات. نتمنى لك إقامة ممتعة معنا! 🏆`)
         .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
         .addFields(
             { name: '👤 MEMBER', value: `${member}`, inline: true },
@@ -561,8 +505,9 @@ client.on('guildMemberRemove', async member => {
     const embed = new EmbedBuilder()
         .setColor('#ff4747')
         .setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL({ dynamic: true }) })
-        .setTitle('👋 Goodbye from Communauté')
+        .setTitle('👋 Goodbye from District')
         .setDescription(`غادر العضو ${member} السيرفر. نتمنى له التوفيق!\n📊 عدد الأعضاء الحالي: **${member.guild.memberCount}**`)
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
         .setTimestamp();
 
     await channel.send({ content: `${member}`, embeds: [embed] });
@@ -609,7 +554,7 @@ client.on('interactionCreate', async interaction => {
             const row = new ActionRowBuilder().addComponents(selectMenu);
             const embed = new EmbedBuilder()
                 .setColor('#000000')
-                .setTitle('الدعم الفني - Communauté')
+                .setTitle('الدعم الفني - District')
                 .setDescription('اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.');
 
             await interaction.reply({ embeds: [embed], components: [row] });
@@ -633,7 +578,7 @@ client.on('interactionCreate', async interaction => {
                 new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
                 new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
             );
-            const embed = new EmbedBuilder().setColor('#2b2d31').setTitle('🌟 أهلاً بك في سيرفر Communauté 🌟').setDescription('اضغط على الأزرار بالأسفل لتبدأ!');
+            const embed = new EmbedBuilder().setColor('#2b2d31').setTitle('🌟 أهلاً بك في سيرفر District 🌟').setDescription('اضغط على الأزرار بالأسفل لتبدأ!');
             await interaction.reply({ embeds: [embed], components: [row] });
         }
     }
