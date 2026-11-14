@@ -9,7 +9,8 @@ const {
     EmbedBuilder, 
     ChannelType, 
     PermissionsBitField,
-    SlashCommandBuilder
+    SlashCommandBuilder,
+    AuditLogEvent
 } = require('discord.js');
 const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const express = require('express');
@@ -46,7 +47,6 @@ client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
     client.user.setActivity('District RF Server', { type: 3 });
 
-    // جلب وحفظ دعوات السيرفر عند الإقلاع
     for (const guild of client.guilds.cache.values()) {
         try {
             const firstInvites = await guild.invites.fetch();
@@ -56,7 +56,6 @@ client.on('ready', async () => {
         }
     }
 
-    // تسجيل جميع أوامر السلاش (Slash Commands) تلقائياً
     const commands = [
         new SlashCommandBuilder().setName('join').setDescription('دخول البوت إلى روم الصوت الخاص بك'),
         new SlashCommandBuilder().setName('leave').setDescription('خروج البوت من روم الصوت'),
@@ -73,7 +72,6 @@ client.on('ready', async () => {
     }
 });
 
-// الأيدي الخاصة بالرومات والسيرفر واللوغ
 const CHANNELS = {
     LOG: '1569093925266784286',          // روم لوغ السيرفر العام
     ROLES_LOG: '1569094610217861171',   // روم لوغ الرتب
@@ -85,16 +83,13 @@ const CHANNELS = {
     GAMES_ROLES: '1560471208766476298'     // روم رتب الألعاب
 };
 
-// الأيدي الخاصة بالرتب للصلاحيات والتسليم
 const ROLES = {
-    STAFF_SUPPORT: '1561461730545115276', // رول الدعم
-    PARTNER_1: '1560523485850247168',     // رول الشراكات الأول
-    PARTNER_2: '1560523789991813180',     // رول الشراكات الثاني
-    DISTRICTIAN: '1560723045222453269',   // رول ديستريكتيان
-    MINI_GAMES: '1560453077058850927',    // رول ميني قيمز
-    VERIFY: '1560453481217785926',        // رول فيريفاي
-    
-    // رتب الألعاب الـ 13 بالترتيب
+    STAFF_SUPPORT: '1561461730545115276',
+    PARTNER_1: '1560523485850247168',
+    PARTNER_2: '1560523789991813180',
+    DISTRICTIAN: '1560723045222453269',
+    MINI_GAMES: '1560453077058850927',
+    VERIFY: '1560453481217785926',
     GAMES: {
         'cs2': '1560453628790055052',
         'valo': '1560453742774591519',
@@ -112,44 +107,54 @@ const ROLES = {
     }
 };
 
-// حماية التكرار والسبام للوغ
 const voiceCooldown = new Set();
 const roleCooldown = new Set();
 const messageLogCooldown = new Set();
 
 // ==========================================
-// 1. نظام لوغ السيرفر الشامل (Server Logs)
+// 1. نظام لوغ السيرفر الشامل (Server Logs) مع تحديد الفاعل
 // ==========================================
 
-// Ban Logs
 client.on('guildBanAdd', async ban => {
     const logChannel = ban.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
 
+    let executor = 'غير معروف';
+    try {
+        const fetchedLogs = await ban.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberBanAdd });
+        const banLog = fetchedLogs.entries.first();
+        if (banLog && banLog.target.id === ban.user.id) executor = `${banLog.executor.tag}`;
+    } catch (e) {}
+
     const embed = new EmbedBuilder()
         .setTitle('🔨 **Member Banned / حظر عضو**')
-        .setDescription(`**User:** ${ban.user.tag}\n**Reason:** ${ban.reason || 'No reason provided'}`)
+        .setDescription(`**User:** ${ban.user.tag}\n**By (المشرف):** ${executor}\n**Reason:** ${ban.reason || 'No reason provided'}`)
         .setColor('#8b0000')
         .setTimestamp();
 
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// Unban Logs
 client.on('guildBanRemove', async ban => {
     const logChannel = ban.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
 
+    let executor = 'غير معروف';
+    try {
+        const fetchedLogs = await ban.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberBanRemove });
+        const unbanLog = fetchedLogs.entries.first();
+        if (unbanLog && unbanLog.target.id === ban.user.id) executor = `${unbanLog.executor.tag}`;
+    } catch (e) {}
+
     const embed = new EmbedBuilder()
         .setTitle('🔓 **Member Unbanned / فك حظر عضو**')
-        .setDescription(`**User:** ${ban.user.tag}`)
+        .setDescription(`**User:** ${ban.user.tag}\n**By (المشرف):** ${executor}`)
         .setColor('#00ff7f')
         .setTimestamp();
 
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// Voice Logs (Disconnect, Join, Move with Admin/Staff Detector, Server Mute & Deafen)
 client.on('voiceStateUpdate', async (oldState, newState) => {
     const logChannel = oldState.guild.channels.cache.get(CHANNELS.LOG) || newState.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
@@ -162,80 +167,84 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     voiceCooldown.add(cooldownKey);
     setTimeout(() => voiceCooldown.delete(cooldownKey), 3000);
 
-    // 1. خروج من الفويس (Disconnect)
+    // 1. خروج من الفويس
     if (oldState.channelId && !newState.channelId) {
         const embed = new EmbedBuilder()
             .setTitle('🔇 **Voice Disconnected / خروج من الفويس**')
             .setDescription(`**User:** ${member} (${member.user.tag})\n**Left Channel:** ${oldState.channel?.name || 'Unknown'}`)
             .setColor('#ff9900')
             .setTimestamp();
-        logChannel.send({ embeds: [embed] }).catch(() => {});
+        return logChannel.send({ embeds: [embed] }).catch(() => {});
     } 
-    // 2. انضمام للفويس (Join)
+    // 2. انضمام للفويس
     else if (!oldState.channelId && newState.channelId) {
         const embed = new EmbedBuilder()
             .setTitle('🔊 **Voice Joined / انضمام للفويس**')
             .setDescription(`**User:** ${member} (${member.user.tag})\n**Joined Channel:** ${newState.channel?.name || 'Unknown'}`)
             .setColor('#00ccff')
             .setTimestamp();
-        logChannel.send({ embeds: [embed] }).catch(() => {});
+        return logChannel.send({ embeds: [embed] }).catch(() => {});
     } 
-    // 3. انتقال أو نقل بين الرومات (Move / Switch) ومعرفة من قام بالنقل عبر الـ Audit Logs
+    // 3. انتقل أو نُقل بين الرومات (Move)
     else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
         let movedBy = `${member.user.tag} (انتقال ذاتي)`;
-
         try {
-            const fetchedLogs = await oldState.guild.fetchAuditLogs({
-                limit: 1,
-                type: 24, // AuditLogEvent.MemberMove
-            });
+            const fetchedLogs = await oldState.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberMove });
             const moveLog = fetchedLogs.entries.first();
-            
-            if (moveLog && moveLog.target.id === member.id && (Date.now() - moveLog.createdTimestamp < 3000)) {
+            if (moveLog && moveLog.target.id === member.id && (Date.now() - moveLog.createdTimestamp < 4000)) {
                 movedBy = `${moveLog.executor.tag} (بواسطة مشرف)`;
             }
-        } catch (err) {
-            console.error('Error fetching audit logs for voice move:', err);
-        }
+        } catch (err) {}
 
         const embed = new EmbedBuilder()
-            .setTitle('🔀 **Voice Moved / نقل أو انتقال صوتي**')
-            .setDescription(
-                `**User:** ${member} (${member.user.tag})\n` +
-                `**From:** \`${oldState.channel?.name}\`\n` +
-                `**To:** \`${newState.channel?.name}\`\n` +
-                `**Moved By:** ${movedBy}`
-            )
+            .setTitle('🔀 **Voice Moved / نقل صوتي**')
+            .setDescription(`**User:** ${member} (${member.user.tag})\n**From:** \`${oldState.channel?.name}\`\n**To:** \`${newState.channel?.name}\`\n**Moved By (بواسطة):** ${movedBy}`)
             .setColor('#9370db')
             .setTimestamp();
-
-        logChannel.send({ embeds: [embed] }).catch(() => {});
+        return logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    // Server Mute / Unmute
+    // 4. Server Mute / Unmute
     if (oldState.serverMute !== newState.serverMute) {
+        let mutedBy = 'مشرف غير معروف';
+        try {
+            const fetchedLogs = await oldState.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberUpdate });
+            const mLog = fetchedLogs.entries.first();
+            if (mLog && mLog.target.id === member.id && (Date.now() - mLog.createdTimestamp < 4000)) {
+                mutedBy = mLog.executor.tag;
+            }
+        } catch (e) {}
+
         const status = newState.serverMute ? 'تم إعطاؤه Server Mute' : 'تم إزالة Server Mute عنه';
         const embed = new EmbedBuilder()
             .setTitle('🔇 **Server Mute Update / ميوت سيرفر**')
-            .setDescription(`**User:** ${member} (${member.user.tag})\n**Status:** ${status}`)
+            .setDescription(`**User:** ${member} (${member.user.tag})\n**Status:** ${status}\n**By (المشرف):** ${mutedBy}`)
             .setColor('#ff4500')
             .setTimestamp();
         logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    // Server Deafen / Undeafen
+    // 5. Server Deafen / Undeafen
     if (oldState.serverDeaf !== newState.serverDeaf) {
+        let deafBy = 'مشرف غير معروف';
+        try {
+            const fetchedLogs = await oldState.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberUpdate });
+            const dLog = fetchedLogs.entries.first();
+            if (dLog && dLog.target.id === member.id && (Date.now() - dLog.createdTimestamp < 4000)) {
+                deafBy = dLog.executor.tag;
+            }
+        } catch (e) {}
+
         const status = newState.serverDeaf ? 'تم إعطاؤه Server Deafen' : 'تم إزالة Server Deafen عنه';
         const embed = new EmbedBuilder()
             .setTitle('🎧 **Server Deafen Update / ديفن سيرفر**')
-            .setDescription(`**User:** ${member} (${member.user.tag})\n**Status:** ${status}`)
+            .setDescription(`**User:** ${member} (${member.user.tag})\n**Status:** ${status}\n**By (المشرف):** ${deafBy}`)
             .setColor('#4682b4')
             .setTimestamp();
         logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 });
 
-// Member Timeout Logs (Timeout Added / Removed)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
@@ -244,30 +253,45 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const newTimeout = newMember.communicationDisabledUntilTimestamp;
 
     if (oldTimeout !== newTimeout) {
+        let timeoutBy = 'مشرف غير معروف';
+        try {
+            const fetchedLogs = await newMember.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberUpdate });
+            const tLog = fetchedLogs.entries.first();
+            if (tLog && tLog.target.id === newMember.id && (Date.now() - tLog.createdTimestamp < 4000)) {
+                timeoutBy = tLog.executor.tag;
+            }
+        } catch (e) {}
+
         const embed = new EmbedBuilder().setTimestamp();
         if (newTimeout && newTimeout > Date.now()) {
             embed.setTitle('⏰ **Timeout Added / تعيين تايم أوت**')
-                .setDescription(`**User:** ${newMember} (${newMember.user.tag})\n**Expires:** <t:${Math.floor(newTimeout / 1000)}:R>`)
+                .setDescription(`**User:** ${newMember} (${newMember.user.tag})\n**By (المشرف):** ${timeoutBy}\n**Expires:** <t:${Math.floor(newTimeout / 1000)}:R>`)
                 .setColor('#ff8c00');
             logChannel.send({ embeds: [embed] }).catch(() => {});
         } else if (!newTimeout && oldTimeout) {
             embed.setTitle('✅ **Timeout Removed / إزالة التايم أوت**')
-                .setDescription(`**User:** ${newMember} (${newMember.user.tag})`)
+                .setDescription(`**User:** ${newMember} (${newMember.user.tag})\n**By (المشرف):** ${timeoutBy}`)
                 .setColor('#00fa9a');
             logChannel.send({ embeds: [embed] }).catch(() => {});
         }
     }
 });
 
-// Channel Create & Delete Logs
 client.on('channelCreate', async channel => {
     if (!channel.guild) return;
     const logChannel = channel.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
 
+    let creator = 'مشرف غير معروف';
+    try {
+        const fetchedLogs = await channel.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.ChannelCreate });
+        const cLog = fetchedLogs.entries.first();
+        if (cLog && cLog.target.id === channel.id) creator = cLog.executor.tag;
+    } catch (e) {}
+
     const embed = new EmbedBuilder()
         .setTitle('📁 **Channel Created / إنشاء قناة**')
-        .setDescription(`**Name:** ${channel.name}\n**Type:** ${channel.type}`)
+        .setDescription(`**Name:** ${channel.name}\n**Type:** ${channel.type}\n**By (المشرف):** ${creator}`)
         .setColor('#00ff7f')
         .setTimestamp();
 
@@ -279,16 +303,22 @@ client.on('channelDelete', async channel => {
     const logChannel = channel.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
 
+    let deleter = 'مشرف غير معروف';
+    try {
+        const fetchedLogs = await channel.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.ChannelDelete });
+        const dLog = fetchedLogs.entries.first();
+        if (dLog) deleter = dLog.executor.tag;
+    } catch (e) {}
+
     const embed = new EmbedBuilder()
         .setTitle('🗑️ **Channel Deleted / حذف قناة**')
-        .setDescription(`**Name:** ${channel.name}`)
+        .setDescription(`**Name:** ${channel.name}\n**By (المشرف):** ${deleter}`)
         .setColor('#dc143c')
         .setTimestamp();
 
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// Message Delete & Edit Logs
 client.on('messageDelete', async message => {
     if (!message.guild || message.author?.bot) return;
     const logChannel = message.guild.channels.cache.get(CHANNELS.LOG);
@@ -329,10 +359,9 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
 
 
 // ==========================================
-// 2. نظام لوغ الرتب الشامل (Roles Logs)
+// 2. نظام لوغ الرتب الشامل (Roles Logs) مع تحديد الفاعل بدقة
 // ==========================================
 
-// Member Roles Add / Remove Logs
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
@@ -347,9 +376,16 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             roleCooldown.add(rKey);
             setTimeout(() => roleCooldown.delete(rKey), 5000);
 
+            let executor = 'مشرف غير معروف';
+            try {
+                const fetchedLogs = await newMember.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberRoleUpdate });
+                const rLog = fetchedLogs.entries.first();
+                if (rLog && rLog.target.id === newMember.id) executor = rLog.executor.tag;
+            } catch (e) {}
+
             const embed = new EmbedBuilder()
                 .setTitle('➕ **Role Added / منح رتبة**')
-                .setDescription(`**User:** ${newMember} (${newMember.user.tag})\n**Role:** ${role.name}`)
+                .setDescription(`**User (العضو):** ${newMember} (${newMember.user.tag})\n**Role (الرتبة):** ${role.name}\n**By (المشرف):** ${executor}`)
                 .setColor('#00ff00')
                 .setTimestamp();
             logChannel.send({ embeds: [embed] }).catch(() => {});
@@ -363,9 +399,16 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             roleCooldown.add(rKey);
             setTimeout(() => roleCooldown.delete(rKey), 5000);
 
+            let executor = 'مشرف غير معروف';
+            try {
+                const fetchedLogs = await newMember.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberRoleUpdate });
+                const rLog = fetchedLogs.entries.first();
+                if (rLog && rLog.target.id === newMember.id) executor = rLog.executor.tag;
+            } catch (e) {}
+
             const embed = new EmbedBuilder()
                 .setTitle('➖ **Role Removed / إزالة رتبة**')
-                .setDescription(`**User:** ${newMember} (${newMember.user.tag})\n**Role:** ${role.name}`)
+                .setDescription(`**User (العضو):** ${newMember} (${newMember.user.tag})\n**Role (الرتبة):** ${role.name}\n**By (المشرف):** ${executor}`)
                 .setColor('#ff0000')
                 .setTimestamp();
             logChannel.send({ embeds: [embed] }).catch(() => {});
@@ -373,14 +416,20 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     }
 });
 
-// Role Created, Deleted & Updated Logs (Name & Position Change)
 client.on('roleCreate', async role => {
     const logChannel = role.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
 
+    let creator = 'مشرف غير معروف';
+    try {
+        const fetchedLogs = await role.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.RoleCreate });
+        const cLog = fetchedLogs.entries.first();
+        if (cLog && cLog.target.id === role.id) creator = cLog.executor.tag;
+    } catch (e) {}
+
     const embed = new EmbedBuilder()
         .setTitle('✨ **Role Created / إنشاء رول**')
-        .setDescription(`**Role Name:** ${role.name}`)
+        .setDescription(`**Role Name:** ${role.name}\n**By (المشرف):** ${creator}`)
         .setColor('#00ffff')
         .setTimestamp();
     logChannel.send({ embeds: [embed] }).catch(() => {});
@@ -390,9 +439,16 @@ client.on('roleDelete', async role => {
     const logChannel = role.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
 
+    let deleter = 'مشرف غير معروف';
+    try {
+        const fetchedLogs = await role.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.RoleDelete });
+        const dLog = fetchedLogs.entries.first();
+        if (dLog) deleter = dLog.executor.tag;
+    } catch (e) {}
+
     const embed = new EmbedBuilder()
         .setTitle('🔥 **Role Deleted / حذف رول**')
-        .setDescription(`**Role Name:** ${role.name}`)
+        .setDescription(`**Role Name:** ${role.name}\n**By (المشرف):** ${deleter}`)
         .setColor('#ff4500')
         .setTimestamp();
     logChannel.send({ embeds: [embed] }).catch(() => {});
@@ -402,12 +458,29 @@ client.on('roleUpdate', async (oldRole, newRole) => {
     const logChannel = newRole.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
 
-    // تعديل اسم الرول
-    if (oldRole.name !== newRole.name) {
+    let updater = 'مشرف غير معروف';
+    try {
+        const fetchedLogs = await newRole.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.RoleUpdate });
+        const uLog = fetchedLogs.entries.first();
+        if (uLog && uLog.target.id === newRole.id) updater = uLog.executor.tag;
+    } catch (e) {}
+
+    // تعديل الاسم أو اللون
+    if (oldRole.name !== newRole.name || oldRole.hexColor !== newRole.hexColor) {
         const embed = new EmbedBuilder()
-            .setTitle('✏️ **Role Name Updated / تعديل اسم رول**')
-            .setDescription(`**Before:** ${oldRole.name}\n**After:** ${newRole.name}`)
+            .setTitle('✏️ **Role Updated / تعديل رول**')
+            .setDescription(`**Role:** ${newRole.name}\n**Before Name:** ${oldRole.name} | **After Name:** ${newRole.name}\n**By (المشرف):** ${updater}`)
             .setColor('#ffd700')
+            .setTimestamp();
+        logChannel.send({ embeds: [embed] }).catch(() => {});
+    }
+
+    // تعديل الصلاحيات (Permissions)
+    if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) {
+        const embed = new EmbedBuilder()
+            .setTitle('🔐 **Role Permissions Updated / تعديل صلاحيات رول**')
+            .setDescription(`**Role:** ${newRole.name}\n**By (المشرف):** ${updater}`)
+            .setColor('#ff00ff')
             .setTimestamp();
         logChannel.send({ embeds: [embed] }).catch(() => {});
     }
@@ -416,7 +489,7 @@ client.on('roleUpdate', async (oldRole, newRole) => {
     if (oldRole.position !== newRole.position) {
         const embed = new EmbedBuilder()
             .setTitle('📊 **Role Position Changed / تغيير ترتيب رول**')
-            .setDescription(`**Role:** ${newRole.name}\n**Old Position:** ${oldRole.position}\n**New Position:** ${newRole.position}`)
+            .setDescription(`**Role:** ${newRole.name}\n**Old Position:** ${oldRole.position}\n**New Position:** ${newRole.position}\n**By (المشرف):** ${updater}`)
             .setColor('#da70d6')
             .setTimestamp();
         logChannel.send({ embeds: [embed] }).catch(() => {});
@@ -425,7 +498,7 @@ client.on('roleUpdate', async (oldRole, newRole) => {
 
 
 // ==========================================
-// 3. نظام الترحيب والمغادرة (مع معرفة من قام بالدعوة)
+// 3. نظام الترحيب والمغادرة والتذاكر وألعاب السلاش
 // ==========================================
 client.on('guildMemberAdd', async member => {
     const channel = member.guild.channels.cache.get(CHANNELS.WELCOME);
@@ -442,12 +515,8 @@ client.on('guildMemberAdd', async member => {
                 invitedBy = `${usedInvite.inviter} (${usedInvite.inviter.tag})`;
             }
         }
-
-        // تحديث الـ Cache بالدعوات الجديدة
         invitesCache.set(member.guild.id, new Map(guildInvites.map((invite) => [invite.code, invite.uses])));
-    } catch (err) {
-        console.error('Error tracking invites:', err);
-    }
+    } catch (err) {}
 
     const embed = new EmbedBuilder()
         .setColor('#2b2d31')
@@ -481,139 +550,76 @@ client.on('guildMemberRemove', async member => {
     await channel.send({ content: `${member}`, embeds: [embed] });
 });
 
-
-// ==========================================
-// 4. معالجة أوامر السلاش (Slash Commands) والتفاعلات
-// ==========================================
 client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName, member, guild } = interaction;
 
-        // أمر /join
         if (commandName === 'join') {
             const voiceChannel = member.voice.channel;
-            if (!voiceChannel) {
-                return interaction.reply({ content: '❌ يجب أن تكون متواجداً في روم صوتي (Voice Channel) لكي يتمكن البوت من الدخول معك!', ephemeral: true });
-            }
+            if (!voiceChannel) return interaction.reply({ content: '❌ يجب أن تكون متواجداً في روم صوتي!', ephemeral: true });
             try {
-                joinVoiceChannel({
-                    channelId: voiceChannel.id,
-                    guildId: guild.id,
-                    adapterCreator: guild.voiceAdapterCreator,
-                });
-                await interaction.reply({ content: `✅ تم انضمام البوت إلى روم الصوت: **${voiceChannel.name}** بنجاح!`, ephemeral: true });
+                joinVoiceChannel({ channelId: voiceChannel.id, guildId: guild.id, adapterCreator: guild.voiceAdapterCreator });
+                await interaction.reply({ content: `✅ تم انضمام البوت إلى روم الصوت: **${voiceChannel.name}**`, ephemeral: true });
             } catch (error) {
-                console.error(error);
-                await interaction.reply({ content: '❌ حدث خطأ أثناء محاولة البوت دخول روم الصوت.', ephemeral: true });
+                await interaction.reply({ content: '❌ حدث خطأ.', ephemeral: true });
             }
         }
 
-        // أمر /leave
         if (commandName === 'leave') {
             const connection = getVoiceConnection(guild.id);
-            if (!connection) {
-                return interaction.reply({ content: '❌ البوت ليس متواجداً في أي روم صوتي حالياً!', ephemeral: true });
-            }
+            if (!connection) return interaction.reply({ content: '❌ البوت ليس متواجداً في أي روم صوتي!', ephemeral: true });
             try {
                 connection.destroy();
-                await interaction.reply({ content: '🚪 تم مغادرة البوت لروم الصوت بنجاح.', ephemeral: true });
+                await interaction.reply({ content: '🚪 تم مغادرة البوت لروم الصوت.', ephemeral: true });
             } catch (error) {
-                console.error(error);
-                await interaction.reply({ content: '❌ حدث خطأ أثناء إخراج البوت من الفويس.', ephemeral: true });
+                await interaction.reply({ content: '❌ حدث خطأ.', ephemeral: true });
             }
         }
 
-        // أمر /ticket
         if (commandName === 'ticket') {
-            if (interaction.channel.id !== CHANNELS.TICKET_SETUP) {
-                return interaction.reply({ content: '❌ يرجى استخدام هذا الأمر في روم التذاكر المحدد!', ephemeral: true });
-            }
+            if (interaction.channel.id !== CHANNELS.TICKET_SETUP) return interaction.reply({ content: '❌ استخدم هذا الأمر في روم التذاكر المحدد!', ephemeral: true });
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('ticket_menu')
                 .setPlaceholder('اختر خيار التذكرة...')
                 .addOptions([
-                    { label: 'NEED HELP', description: 'للمساعدة العامة والاستفسارات والأوامر وقوانين السيرفر.', value: 'ticket_help', emoji: '❓' },
-                    { label: 'REPORTS', description: 'للإبلاغ عن المخالفات والمشاكل (بسرية تامة).', value: 'ticket_report', emoji: '🚨' },
-                    { label: 'PARTNERSHIP', description: 'لطلب الشراكات ونشر السيرفرات وتعريفها.', value: 'ticket_partner', emoji: '🤝' }
+                    { label: 'NEED HELP', description: 'للمساعدة العامة والاستفسارات.', value: 'ticket_help', emoji: '❓' },
+                    { label: 'REPORTS', description: 'للإبلاغ عن المخالفات.', value: 'ticket_report', emoji: '🚨' },
+                    { label: 'PARTNERSHIP', description: 'لطلب الشراكات.', value: 'ticket_partner', emoji: '🤝' }
                 ]);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
-
             const embed = new EmbedBuilder()
-                .setColor('#000000') // تم جعل الخط الجانبي أسود تماماً
+                .setColor('#000000')
                 .setTitle('الدعم الفني - District')
-                .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n' +
-                    '❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n' +
-                    '🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n' +
-                    '🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n' +
-                    '📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
-                .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
+                .setDescription('اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.');
 
             await interaction.reply({ embeds: [embed], components: [row] });
         }
 
-        // أمر /games-roles
         if (commandName === 'games-roles') {
-            if (interaction.channel.id !== CHANNELS.GAMES_ROLES) {
-                return interaction.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
-            }
-
+            if (interaction.channel.id !== CHANNELS.GAMES_ROLES) return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
             const embed = new EmbedBuilder()
                 .setColor('#ffffff')
-                .setTitle('🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥')
-                .setDescription(`🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                    `:purple_moon: **GAMES**\n\n` +
-                    `cs2 ➔ <@&${ROLES.GAMES.cs2}>\n` +
-                    `valo ➔ <@&${ROLES.GAMES.valo}>\n` +
-                    `fortnite ➔ <@&${ROLES.GAMES.fortnite}>\n` +
-                    `fire ➔ <@&${ROLES.GAMES.fire}>\n` +
-                    `rocket ➔ <@&${ROLES.GAMES.rocket}>\n` +
-                    `amongus ➔ <@&${ROLES.GAMES.amongus}>\n` +
-                    `minecraft ➔ <@&${ROLES.GAMES.minecraft}>\n` +
-                    `roblox ➔ <@&${ROLES.GAMES.roblox}>\n` +
-                    `soccer ➔ <@&${ROLES.GAMES.soccer}>\n` +
-                    `bluecar ➔ <@&${ROLES.GAMES.bluecar}>\n` +
-                    `pes ➔ <@&${ROLES.GAMES.pes}>\n` +
-                    `racecar ➔ <@&${ROLES.GAMES.racecar}>\n` +
-                    `fivem ➔ <@&${ROLES.GAMES.fivem}>\n\n` +
-                    `🌹・𝑪𝒉𝒐𝒐𝒔𝒆 𝒀𝒐𝒖𝒓 𝑹𝒐𝒍𝒆`)
-                .setFooter({ text: 'تفاعل بالريأكشن المناسب بالأسفل للحصول على الرتبة!' });
-
+                .setTitle('🎮 Choisis tes jeux préférés !')
+                .setDescription('تفاعل بالريأكشن المناسب بالأسفل للحصول على الرتبة!');
             const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
-
             const emojis = ['🇨🇸', '🇻🇦', '🇫🇳', '🔥', '🚀', '👾', '⛏️', '🤖', '⚽', '🚗', '🏟️', '🏎️', '🖥️'];
-            for (const emoji of emojis) {
-                await msg.react(emoji).catch(() => {});
-            }
+            for (const emoji of emojis) { await msg.react(emoji).catch(() => {}); }
         }
 
-        // أمر /setup-roles
         if (commandName === 'setup-roles') {
-            if (interaction.channel.id !== CHANNELS.STATIC_ROLES) {
-                return interaction.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
-            }
-
+            if (interaction.channel.id !== CHANNELS.STATIC_ROLES) return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝒏').setStyle(ButtonStyle.Primary),
                 new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
                 new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
             );
-
-            const embed = new EmbedBuilder()
-                .setColor('#2b2d31')
-                .setTitle('🌟 أهلاً بك في سيرفر 🌹District 🌟')
-                .setDescription('مرحباً بك يا صديقي في مجتمعنا!\n\n' +
-                    '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n' +
-                    '🌌 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر لفتح الشات العام والتفاعل بحرية.\n' +
-                    '🎮 **Mini Games** : رول خاص بمحبي الألعاب للمشاركة في التحديات والفعاليات المصغرة\n\n' +
-                    '👇 اضغط على الأزرار بالأسفل لتبدأ معنا!');
-
+            const embed = new EmbedBuilder().setColor('#2b2d31').setTitle('🌟 أهلاً بك في سيرفر District 🌟').setDescription('اضغط على الأزرار بالأسفل لتبدأ!');
             await interaction.reply({ embeds: [embed], components: [row] });
         }
     }
 
-    // تفاعلات الأزرار والقوائم المنسدلة والتذاكر
     if (interaction.isButton() && interaction.customId.startsWith('role_')) {
         await interaction.deferReply({ ephemeral: true });
         let roleId = '';
@@ -623,7 +629,6 @@ client.on('interactionCreate', async interaction => {
 
         const role = interaction.guild.roles.cache.get(roleId);
         if (!role) return interaction.editReply({ content: '❌ الرتبة غير موجودة!' });
-
         const member = interaction.member;
         if (member.roles.cache.has(roleId)) {
             await member.roles.remove(roleId);
@@ -641,10 +646,7 @@ client.on('interactionCreate', async interaction => {
 
         if (choice === 'ticket_help') ticketName = 'help';
         if (choice === 'ticket_report') ticketName = 'report';
-        if (choice === 'ticket_partner') {
-            ticketName = 'partner';
-            pingRoles = `<@&${ROLES.PARTNER_1}> <@&${ROLES.PARTNER_2}>`;
-        }
+        if (choice === 'ticket_partner') { ticketName = 'partner'; pingRoles = `<@&${ROLES.PARTNER_1}> <@&${ROLES.PARTNER_2}>`; }
 
         const guild = interaction.guild;
         const member = interaction.member;
@@ -654,10 +656,8 @@ client.on('interactionCreate', async interaction => {
             type: ChannelType.GuildText,
             permissionOverwrites: [
                 { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-                { id: member.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
-                { id: ROLES.STAFF_SUPPORT, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
-                { id: ROLES.PARTNER_1, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
-                { id: ROLES.PARTNER_2, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory] },
+                { id: member.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+                { id: ROLES.STAFF_SUPPORT, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
             ],
         });
 
@@ -666,109 +666,18 @@ client.on('interactionCreate', async interaction => {
             new ButtonBuilder().setCustomId('close_ticket').setLabel('Close 🔒').setStyle(ButtonStyle.Danger)
         );
 
-        const embed = new EmbedBuilder()
-            .setColor('#ffffff')
-            .setTitle(`تذكرة جديدة: ${ticketName.toUpperCase()}`)
-            .setDescription(`مرحباً ${member}، تم فتح تذكرتك بنجاح.\nالرجاء الانتظار ريثما يرد عليك فريق الإدارة.`);
-
+        const embed = new EmbedBuilder().setColor('#ffffff').setTitle(`تذكرة جديدة: ${ticketName.toUpperCase()}`).setDescription(`مرحباً ${member}، تم فتح تذكرتك.`);
         await channel.send({ content: `${pingRoles} ${member}`, embeds: [embed], components: [ticketButtons] });
-        await interaction.reply({ content: `✅ تم إنشاء تذكرتك بنجاح: ${channel}`, ephemeral: true });
+        await interaction.reply({ content: `✅ تم إنشاء تذكرتك: ${channel}`, ephemeral: true });
     }
 
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            const member = interaction.member;
-            const hasPermission = member.roles.cache.has(ROLES.STAFF_SUPPORT) || member.roles.cache.has(ROLES.PARTNER_1) || member.roles.cache.has(ROLES.PARTNER_2);
-            if (!hasPermission) {
-                return interaction.reply({ content: '❌ عذراً، هذا الزر مخصص لفريق الإدارة فقط!', ephemeral: true });
-            }
-            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${member}.` });
+            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${interaction.member}.` });
         }
-
         if (interaction.customId === 'close_ticket') {
-            await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة وحفظ السجل...' });
-            
-            const logChannel = interaction.guild.channels.cache.get(CHANNELS.TICKET_LOG);
-            if (logChannel) {
-                const logEmbed = new EmbedBuilder()
-                    .setColor('#ff4747')
-                    .setTitle('🔒 تذكرة مغلقة (Log)')
-                    .setDescription(`تم إغلاق التذكرة **${interaction.channel.name}** بواسطة ${interaction.user.tag}`);
-                await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
-            }
-
-            setTimeout(() => interaction.channel.delete().catch(() => {}), 4000);
-        }
-    }
-});
-
-// التفاعل بالريأكشن لرتب الألعاب
-client.on('messageReactionAdd', async (reaction, user) => {
-    if (user.bot) return;
-    if (reaction.partial) await reaction.fetch();
-
-    const guild = reaction.message.guild;
-    if (!guild) return;
-    const member = guild.members.cache.get(user.id);
-    if (!member) return;
-
-    const emojiName = reaction.emoji.name;
-    const roleMapEmoji = {
-        '🇨🇸': ROLES.GAMES.cs2,
-        '🇻🇦': ROLES.GAMES.valo,
-        '🇫🇳': ROLES.GAMES.fortnite,
-        '🔥': ROLES.GAMES.fire,
-        '🚀': ROLES.GAMES.rocket,
-        '👾': ROLES.GAMES.amongus,
-        '⛏️': ROLES.GAMES.minecraft,
-        '🤖': ROLES.GAMES.roblox,
-        '⚽': ROLES.GAMES.soccer,
-        '🚗': ROLES.GAMES.bluecar,
-        '🏟️': ROLES.GAMES.pes,
-        '🏎️': ROLES.GAMES.racecar,
-        '🖥️': ROLES.GAMES.fivem
-    };
-
-    const roleId = roleMapEmoji[emojiName];
-    if (roleId) {
-        const role = guild.roles.cache.get(roleId);
-        if (role && !member.roles.cache.has(roleId)) {
-            await member.roles.add(roleId).catch(() => {});
-        }
-    }
-});
-
-client.on('messageReactionRemove', async (reaction, user) => {
-    if (user.bot) return;
-    if (reaction.partial) await reaction.fetch();
-
-    const guild = reaction.message.guild;
-    if (!guild) return;
-    const member = guild.members.cache.get(user.id);
-    if (!member) return;
-
-    const emojiName = reaction.emoji.name;
-    const roleMapEmoji = {
-        '🇨🇸': ROLES.GAMES.cs2,
-        '🇻🇦': ROLES.GAMES.valo,
-        '🇫🇳': ROLES.GAMES.fortnite,
-        '🔥': ROLES.GAMES.fire,
-        '🚀': ROLES.GAMES.rocket,
-        '👾': ROLES.GAMES.amongus,
-        '⛏️': ROLES.GAMES.minecraft,
-        '🤖': ROLES.GAMES.roblox,
-        '⚽': ROLES.GAMES.soccer,
-        '🚗': ROLES.GAMES.bluecar,
-        '🏟️': ROLES.GAMES.pes,
-        '🏎️': ROLES.GAMES.racecar,
-        '🖥️': ROLES.GAMES.fivem
-    };
-
-    const roleId = roleMapEmoji[emojiName];
-    if (roleId) {
-        const role = guild.roles.cache.get(roleId);
-        if (role && member.roles.cache.has(roleId)) {
-            await member.roles.remove(roleId).catch(() => {});
+            await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة...' });
+            setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
         }
     }
 });
