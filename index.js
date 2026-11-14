@@ -176,7 +176,7 @@ client.on('guildBanRemove', async ban => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// طرد عضو (Kick)
+// طرد عضو (Kick) أو تيم آوت (Timeout)
 client.on('guildAuditLogEntryCreate', async (auditLogEntry, guild) => {
     if (auditLogEntry.action === AuditLogEvent.MemberKick) {
         const logChannel = guild.channels.cache.get(CHANNELS.LOG);
@@ -192,7 +192,6 @@ client.on('guildAuditLogEntryCreate', async (auditLogEntry, guild) => {
         logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    // العقوبات المؤقتة (Timeout / Mute)
     if (auditLogEntry.action === AuditLogEvent.MemberUpdate) {
         const logChannel = guild.channels.cache.get(CHANNELS.LOG);
         if (!logChannel) return;
@@ -201,7 +200,6 @@ client.on('guildAuditLogEntryCreate', async (auditLogEntry, guild) => {
         const executor = auditLogEntry.executor;
         const changes = auditLogEntry.changes;
 
-        // فحص التيم آوت (Communication Disabled Until)
         const timeoutChange = changes.find(c => c.key === 'communication_disabled_until');
         if (timeoutChange) {
             const embed = new EmbedBuilder()
@@ -213,7 +211,7 @@ client.on('guildAuditLogEntryCreate', async (auditLogEntry, guild) => {
     }
 });
 
-// الأحداث الصوتية (Voice States: Disconnect, Move, Undeafen)
+// الأحداث الصوتية في Server Logs (Disconnect, Move, Undeafen, Deafen, Mute)
 client.on('voiceStateUpdate', async (oldState, newState) => {
     const logChannel = oldState.guild.channels.cache.get(CHANNELS.LOG) || newState.guild.channels.cache.get(CHANNELS.LOG);
     if (!logChannel) return;
@@ -226,7 +224,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     voiceCooldown.add(cooldownKey);
     setTimeout(() => voiceCooldown.delete(cooldownKey), 3000);
 
-    // 1. فصل شخص من الفويس (Disconnect) مع تحديد المكان والمشرف بـ Mention
+    // 1. فصل من الفويس (Disconnect)
     if (oldState.channelId && !newState.channelId) {
         await wait(1000);
         let discBy = `<@${member.id}> (خرج بنفسه)`;
@@ -252,7 +250,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
             .setColor('#00ccff').setTimestamp();
         return logChannel.send({ embeds: [embed] }).catch(() => {});
     } 
-    // 2. نقل شخص من روم إلى آخر (Move) مع تحديد المكانين والمشرف بـ Mention
+    // 2. نقل من روم لآخر (Move)
     else if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
         await wait(1000);
         let movedBy = `<@${member.id}> (انتقال ذاتي)`;
@@ -291,7 +289,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    // 3. إلغاء الصمم (Undeafen) أو الصمم (Deafen) مع التاغ الكامل
+    // 3. إلغاء الصمم (Undeafen) أو الصمم (Deafen)
     if (oldState.serverDeaf !== newState.serverDeaf) {
         await wait(1000);
         let deafBy = 'مشرف غير معروف';
@@ -317,7 +315,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
 
 
 // ==========================================
-// 2. نظام لوغ الرتب (Roles Logs) المخصص والدقيق
+// 2. نظام لوغ الرتب (Roles Logs) مع منع تكرار الرومات وتحريك الرول المطلوب فقط
 // ==========================================
 
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
@@ -327,7 +325,6 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
     const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
 
-    // منح رتبة مع التاغ
     if (addedRoles.size > 0) {
         for (const role of addedRoles.values()) {
             await wait(1000);
@@ -346,7 +343,6 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
         }
     }
 
-    // نزع رول مع التاغ
     if (removedRoles.size > 0) {
         for (const role of removedRoles.values()) {
             await wait(1000);
@@ -366,67 +362,99 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     }
 });
 
-// رصد تعديل الرولات: تحريك الرول المحدد يدوياً + تفاصيل الصلاحيات مع التاغ
+// مخزن مؤقت لترتيب وتحريك الرولات (يعرض الرول المسحوب باليد فقط دون باقي الرولات التلقائية)
+const roleMoveBuffer = new Map();
+
 client.on('roleUpdate', async (oldRole, newRole) => {
     const logChannel = newRole.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
-    await wait(1200);
 
-    let executor = 'مشرف غير معروف';
-    try {
-        const logs = await newRole.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.RoleUpdate });
-        const entry = logs.entries.first();
-        if (entry && entry.target.id === newRole.id) {
-            executor = `<@${entry.executor.id}>`;
-        }
-    } catch (e) {}
-
-    let changes = [];
-
-    // فحص تغيير الاسم
-    if (oldRole.name !== newRole.name) {
-        changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
-    }
-
-    // فحص تغيير اللون
-    if (oldRole.hexColor !== newRole.hexColor) {
-        changes.push(`🎨 **تغيير اللون:** من \`${oldRole.hexColor}\` إلى \`${newRole.hexColor}\``);
-    }
-
-    // 1. تحريك الرول (Move Role): يذكر هذا الرول فقط بالذات من رتبة إلى رتبة مع المشرف بـ Mention
-    if (oldRole.position !== newRole.position) {
-        changes.push(`↕️ **تغيير الموقع (Move Role):** تم تحريك الرول ${newRole} من الترتيب الرقمي \`${oldRole.position}\` إلى الترتيب \`${newRole.position}\``);
-    }
-
-    // 2. فحص الصلاحيات المضافة أو المنفية بالتحديد مع التاغ
+    // 1. فحص تعديل الصلاحيات أو الاسم أو اللون
     const oldPerms = new PermissionsBitField(oldRole.permissions.bitfield);
     const newPerms = new PermissionsBitField(newRole.permissions.bitfield);
-
     const addedPerms = newPerms.toArray().filter(p => !oldPerms.has(p));
     const removedPerms = oldPerms.toArray().filter(p => !newPerms.has(p));
 
-    if (addedPerms.length > 0) {
-        changes.push(`✅ **الصلاحيات المضافة:** \`${addedPerms.join(', ')}\``);
+    const hasOtherChanges = 
+        oldRole.name !== newRole.name || 
+        oldRole.hexColor !== newRole.hexColor || 
+        addedPerms.length > 0 || 
+        removedPerms.length > 0;
+
+    if (hasOtherChanges) {
+        await wait(1200);
+        let executor = 'مشرف غير معروف';
+        try {
+            const logs = await newRole.guild.fetchAuditLogs({ limit: 3, type: AuditLogEvent.RoleUpdate });
+            const entry = logs.entries.find(e => e.target.id === newRole.id && (Date.now() - e.createdTimestamp < 10000));
+            if (entry) executor = `<@${entry.executor.id}>`;
+        } catch (e) {}
+
+        let changes = [];
+        if (oldRole.name !== newRole.name) changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
+        if (oldRole.hexColor !== newRole.hexColor) changes.push(`🎨 **تغيير اللون:** من \`${oldRole.hexColor}\` إلى \`${newRole.hexColor}\``);
+        if (addedPerms.length > 0) changes.push(`✅ **الصلاحيات المضافة:** \`${addedPerms.join(', ')}\``);
+        if (removedPerms.length > 0) changes.push(`❌ **الصلاحيات المنفية (المزالة):** \`${removedPerms.join(', ')}\``);
+
+        const embed = new EmbedBuilder()
+            .setTitle('🛠️ **Role Updated / تعديل رول**')
+            .setDescription(`🏷️ **الرول المعدل:** ${newRole}\n\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
+            .setColor('#ffa500')
+            .setTimestamp();
+
+        logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    if (removedPerms.length > 0) {
-        changes.push(`❌ **الصلاحيات المنفية (المزالة):** \`${removedPerms.join(', ')}\``);
+    // 2. فحص تحريك مكان الرول (Move Role) - يذكر الرول المسحوب بيدك فقط
+    if (oldRole.position !== newRole.position) {
+        const guildId = newRole.guild.id;
+        
+        if (!roleMoveBuffer.has(guildId)) {
+            roleMoveBuffer.set(guildId, []);
+            
+            setTimeout(async () => {
+                const moves = roleMoveBuffer.get(guildId) || [];
+                roleMoveBuffer.delete(guildId);
+                if (moves.length === 0) return;
+
+                // اختيار الرول صاحب الفارق الأكبر في الحركة (الرول الذي تم سحبه باليد)
+                moves.sort((a, b) => Math.abs(b.newPos - b.oldPos) - Math.abs(a.newPos - a.oldPos));
+                const mainMovedRole = moves[0];
+
+                let executor = 'مشرف غير معروف';
+                try {
+                    const logs = await newRole.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.RoleUpdate });
+                    const entry = logs.entries.find(e => (Date.now() - e.createdTimestamp < 10000));
+                    if (entry) executor = `<@${entry.executor.id}>`;
+                } catch (e) {}
+
+                const embed = new EmbedBuilder()
+                    .setTitle('↕️ **Role Moved / تغيير مكان رول**')
+                    .setDescription(`🏷️ **الرول المتحرك:** ${mainMovedRole.role}\n📊 **الترتيب:** من \`${mainMovedRole.oldPos}\` إلى \`${mainMovedRole.newPos}\`\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
+                    .setColor('#3498db')
+                    .setTimestamp();
+
+                logChannel.send({ embeds: [embed] }).catch(() => {});
+            }, 1500);
+        }
+
+        const currentMoves = roleMoveBuffer.get(guildId);
+        const existing = currentMoves.find(m => m.role.id === newRole.id);
+        if (existing) {
+            existing.newPos = newRole.position;
+        } else {
+            currentMoves.push({
+                role: newRole,
+                oldPos: oldRole.position,
+                newPos: newRole.position
+            });
+        }
     }
-
-    if (changes.length === 0) return; // عدم إرسال رسالة إذا لم يحدث تعديل حقيقي من المذكورين
-
-    const embed = new EmbedBuilder()
-        .setTitle('🛠️ **Role Updated / تعديل رول**')
-        .setDescription(`🏷️ **الرول المعدل:** ${newRole}\n\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
-        .setColor('#ffa500')
-        .setTimestamp();
-
-    logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
 
 // ==========================================
-// 3. الترحيب، المغادرة، والأوامر العامة
+// 3. الترحيب، المغادرة، والأوامر العامة والتذاكر
 // ==========================================
 client.on('guildMemberAdd', async member => {
     const channel = member.guild.channels.cache.get(CHANNELS.WELCOME);
@@ -561,7 +589,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${interaction.member}.` });
+            await interaction.reply({ content: `🙋‍♂️ تم استلاستلم التذكرة بواسطة ${interaction.member}.` });
         }
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة...' });
