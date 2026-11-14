@@ -273,7 +273,7 @@ client.on('guildMemberAdd', async member => {
     const embed = new EmbedBuilder()
         .setColor('#2b2d31')
         .setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL({ dynamic: true }) })
-        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐃𝐈Σ𝐓𝐑𝐈𝐂𝐓! 🌹')
+        .setTitle('🌹 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓! 🌹')
         .setDescription(`👋 Welcome ${member}!\n\n🔥 Bienvenue dans notre communauté !\n\n🎮 Choisis tes jeux et partage tes meilleurs moments avec nous.\n\n❤️ مرحبًا بك في عائلة District!\n✨ هنا تبدأ المتعة، الصداقة والتحديات. نتمنى لك إقامة ممتعة معنا! 🏆`)
         .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
         .addFields(
@@ -310,6 +310,7 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName, member, guild } = interaction;
 
+        // أمر /join
         if (commandName === 'join') {
             const voiceChannel = member.voice.channel;
             if (!voiceChannel) {
@@ -328,6 +329,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
+        // أمر /leave
         if (commandName === 'leave') {
             const connection = getVoiceConnection(guild.id);
             if (!connection) {
@@ -342,6 +344,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
+        // أمر /ticket
         if (commandName === 'ticket') {
             if (interaction.channel.id !== CHANNELS.TICKET_SETUP) {
                 return interaction.reply({ content: '❌ يرجى استخدام هذا الأمر في روم التذاكر المحدد!', ephemeral: true });
@@ -359,19 +362,20 @@ client.on('interactionCreate', async interaction => {
             const row = new ActionRowBuilder().addComponents(selectMenu);
 
             const embed = new EmbedBuilder()
-                .setColor('#ffffff')
+                .setColor('#000000') // تم جعل الخط الجانبي أسود تماماً
                 .setTitle('الدعم الفني - District')
                 .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n' +
                     '❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n' +
                     '🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n' +
                     '🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n' +
                     '📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
-                .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&')
-                .setFooter({ text: 'District Server © 2026' });
+                .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
+                // تمت إزالة التذييل District Server 2026 نهائياً
 
             await interaction.reply({ embeds: [embed], components: [row] });
         }
 
+        // أمر /games-roles
         if (commandName === 'games-roles') {
             if (interaction.channel.id !== CHANNELS.GAMES_ROLES) {
                 return interaction.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
@@ -406,6 +410,7 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
+        // أمر /setup-roles
         if (commandName === 'setup-roles') {
             if (interaction.channel.id !== CHANNELS.STATIC_ROLES) {
                 return interaction.reply({ content: '❌ هذا ليس الروم المخصص لهذا الأمر!', ephemeral: true });
@@ -430,6 +435,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
+    // تفاعلات الأزرار والقوائم المنسدلة
     if (interaction.isButton() && interaction.customId.startsWith('role_')) {
         await interaction.deferReply({ ephemeral: true });
         let roleId = '';
