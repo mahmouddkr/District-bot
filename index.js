@@ -199,7 +199,7 @@ client.on('ready', async () => {
                             `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !\n` +
                             `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
                             `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
-                            `# <:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
+                            `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                             `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                             `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
                             `<:Free_Fire:1571338358452519034> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fire}>\n` +
@@ -244,7 +244,7 @@ client.on('ready', async () => {
                             `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !\n` +
                             `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
                             `# 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
-                            `# <:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
+                            `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
                             `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
                             `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
                             `<:MCI:1571663050124038254> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mci}>\n` +
@@ -803,7 +803,7 @@ client.on('interactionCreate', async interaction => {
                     `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !\n` +
                     `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
                     `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
-                    `#<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
+                    `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                     `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                     `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
                     `<:Free_Fire:1571338358452519034> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fire}>\n` +
