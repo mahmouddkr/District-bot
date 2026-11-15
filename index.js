@@ -1,4 +1,4 @@
-Const { 
+const { 
     Client, 
     GatewayIntentBits, 
     Partials, 
@@ -106,8 +106,10 @@ client.on('ready', async () => {
 
     for (const guild of client.guilds.cache.values()) {
         try {
-            const firstInvites = await guild.invites.fetch();
-            invitesCache.set(guild.id, new Map(firstInvites.map((invite) => [invite.code, invite.uses])));
+            const firstInvites = await guild.invites.fetch().catch(() => null);
+            if (firstInvites) {
+                invitesCache.set(guild.id, new Map(firstInvites.map((invite) => [invite.code, invite.uses])));
+            }
         } catch (err) {
             console.error(`Could not fetch invites for guild ${guild.name}:`, err);
         }
@@ -119,8 +121,8 @@ client.on('ready', async () => {
             // 1. إرسال لوحة التذاكر تلقائياً في روم التذاكر
             const ticketChannel = guild.channels.cache.get(CHANNELS.TICKET_SETUP);
             if (ticketChannel) {
-                const messages = await ticketChannel.messages.fetch({ limit: 10 });
-                const hasBotTicket = messages.some(m => m.author.id === client.user.id && m.components.length > 0);
+                const messages = await ticketChannel.messages.fetch({ limit: 10 }).catch(() => null);
+                const hasBotTicket = messages ? messages.some(m => m.author.id === client.user.id && m.components.length > 0) : false;
                 
                 if (!hasBotTicket) {
                     const selectMenu = new StringSelectMenuBuilder()
@@ -139,7 +141,7 @@ client.on('ready', async () => {
                         .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
                         .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
 
-                    await ticketChannel.send({ embeds: [ticketEmbed], components: [row] });
+                    await ticketChannel.send({ embeds: [ticketEmbed], components: [row] }).catch(() => {});
                     console.log('✅ تم إرسال لوحة التذاكر تلقائياً بنجاح.');
                 }
             }
@@ -147,8 +149,8 @@ client.on('ready', async () => {
             // 2. إرسال لوحة الرتب الثابتة تلقائياً في روم الرتب
             const staticRolesChannel = guild.channels.cache.get(CHANNELS.STATIC_ROLES);
             if (staticRolesChannel) {
-                const messages = await staticRolesChannel.messages.fetch({ limit: 10 });
-                const hasBotRoles = messages.some(m => m.author.id === client.user.id && m.components.length > 0);
+                const messages = await staticRolesChannel.messages.fetch({ limit: 10 }).catch(() => null);
+                const hasBotRoles = messages ? messages.some(m => m.author.id === client.user.id && m.components.length > 0) : false;
 
                 if (!hasBotRoles) {
                     const rolesEmbed = new EmbedBuilder()
@@ -168,7 +170,7 @@ client.on('ready', async () => {
                         new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
                     );
 
-                    await staticRolesChannel.send({ embeds: [rolesEmbed], components: [rowRoles] });
+                    await staticRolesChannel.send({ embeds: [rolesEmbed], components: [rowRoles] }).catch(() => {});
                     console.log('✅ تم إرسال لوحة الرتب الثابتة تلقائياً بنجاح.');
                 }
             }
@@ -531,7 +533,7 @@ client.on('guildMemberAdd', async member => {
         )
         .setTimestamp();
 
-    await channel.send({ content: `${member}`, embeds: [embed] });
+    await channel.send({ content: `${member}`, embeds: [embed] }).catch(() => {});
 });
 
 client.on('guildMemberRemove', async member => {
@@ -546,7 +548,7 @@ client.on('guildMemberRemove', async member => {
         .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
         .setTimestamp();
 
-    await channel.send({ content: `${member}`, embeds: [embed] });
+    await channel.send({ content: `${member}`, embeds: [embed] }).catch(() => {});
 });
 
 // خريطة التفاعلات لألعاب رتب الألعاب
@@ -668,7 +670,7 @@ client.on('interactionCreate', async interaction => {
                     'اضغط على الأزرار بالأسفل لتبدأ معنا! 👇'
                 );
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝐧').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝒏').setStyle(ButtonStyle.Primary),
                 new ButtonBuilder().setCustomId('role_minigames').setLabel('𝐌𝐢𝐧𝐢 𝐆𝐚𝐦𝐞𝘀 🎮').setStyle(ButtonStyle.Danger),
                 new ButtonBuilder().setCustomId('role_verify').setLabel('𝐕𝐄𝐑𝐈𝐅𝐘 ✅').setStyle(ButtonStyle.Success)
             );
@@ -745,7 +747,7 @@ client.on('interactionCreate', async interaction => {
             );
 
             const embed = new EmbedBuilder().setColor('#2b2d31').setTitle(`تذكرة جديدة: ${ticketName.toUpperCase()}`).setDescription(`مرحباً ${member}، تم فتح تذكرتك.`);
-            await channel.send({ content: `${pingRoles} ${member}`, embeds: [embed], components: [ticketButtons] });
+            await channel.send({ content: `${pingRoles} ${member}`, embeds: [embed], components: [ticketButtons] }).catch(() => {});
             await interaction.editReply({ content: `✅ تم إنشاء تذكرتك بنجاح: ${channel}` });
         } catch (err) {
             await interaction.editReply({ content: '❌ حدث خطأ أثناء إنشاء روم التذكرة، تأكد من صلاحيات البوت.' });
@@ -764,23 +766,29 @@ client.on('interactionCreate', async interaction => {
         
         const member = interaction.member;
         if (member.roles.cache.has(roleId)) {
-            await member.roles.remove(roleId);
+            await member.roles.remove(roleId).catch(() => {});
             await interaction.editReply({ content: `✅ تمت إزالة رتبة **${role.name}** منك.` });
         } else {
-            await member.roles.add(roleId);
+            await member.roles.add(roleId).catch(() => {});
             await interaction.editReply({ content: `✅ تم إعطاؤك رتبة **${role.name}** بنجاح!` });
         }
     }
 
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${interaction.member}.` });
+            await interaction.reply({ content: `🙋‍♂️ تم استلاستحداث التذكرة بواسطة ${interaction.member}.` }).catch(() => {});
         }
         if (interaction.customId === 'close_ticket') {
-            await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة خلال ثوانٍ...' });
+            await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة خلال ثوانٍ...' }).catch(() => {});
             setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
         }
     }
 });
 
-client.login(process.env.TOKEN);
+// تسجيل الدخول الآمن
+client.login(process.env.TOKEN).then(() => {
+    console.log("🔐 Bot login process initiated successfully...");
+}).catch(err => {
+    console.error("❌ CRITICAL LOGIN ERROR: Failed to login to Discord. Check your TOKEN!");
+    console.error(err);
+});
