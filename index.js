@@ -485,21 +485,21 @@ client.on('guildMemberRemove', async member => {
     await channel.send({ content: `${member}`, embeds: [embed] });
 });
 
-// خريطة الإيموجيات المخصصة للألعاب (Reaction Roles) - المفتاح هو أيدي أو رمز الإيموجي والقيمة هي أيدي الرول
+// خريطة الإيموجيات العادية المطابقة تماماً للرولات لتعمل ب 13 تفاعل دقيق
 const reactionRoleMap = {
-    '1452670171738275910': ROLES.GAMES.cs2,       // cs2
-    '1452363572679016568': ROLES.GAMES.valo,      // valo
-    '1488994596141924534': ROLES.GAMES.fortnite,  // fortnite
-    '🔥': ROLES.GAMES.fire,                       // fire
-    '1488994687363842098': ROLES.GAMES.rocket,    // rocket
-    '1489036461427654697': ROLES.GAMES.amongus,   // amongus
-    '1452670793539391559': ROLES.GAMES.minecraft, // minecraft
-    '1452605848881987758': ROLES.GAMES.roblox,    // roblox
-    '⚽': ROLES.GAMES.soccer,                     // soccer
-    '🚗': ROLES.GAMES.bluecar,                    // bluecar
-    '1451987881429045290': ROLES.GAMES.pes,       // pes
-    '🏎️': ROLES.GAMES.racecar,                   // racecar
-    '1452363350808858654': ROLES.GAMES.fivem      // fivem
+    '🔫': ROLES.GAMES.cs2,       // cs2
+    '🎯': ROLES.GAMES.valo,      // valo
+    '🪂': ROLES.GAMES.fortnite,  // fortnite
+    '🔥': ROLES.GAMES.fire,       // fire
+    '🚀': ROLES.GAMES.rocket,    // rocket
+    '🕵🏼‍♂️': ROLES.GAMES.amongus,   // amongus
+    '⚒️': ROLES.GAMES.minecraft, // minecraft
+    '🧱': ROLES.GAMES.roblox,    // roblox
+    '⚽️': ROLES.GAMES.soccer,    // soccer
+    '🚙': ROLES.GAMES.bluecar,   // bluecar
+    '🥅': ROLES.GAMES.pes,       // pes
+    '🏎️': ROLES.GAMES.racecar,   // racecar
+    '🚔': ROLES.GAMES.fivem      // fivem
 };
 
 // إضافة الرول عند وضع التفاعل بالإيموجي
@@ -625,7 +625,7 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ embeds: [embed], components: [row] });
         }
 
-        // أمر /games-roles (المرتب والمضبوط تماماً لتظهر الإيموجيات كأشكال حقيقية ومرئية)
+        // أمر /games-roles (بالترتيب الجديد: الرول ➔ السهم ➔ الإيموجي)
         if (commandName === 'games-roles') {
             if (interaction.channel.id !== CHANNELS.GAMES_ROLES) {
                 return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
@@ -642,33 +642,35 @@ client.on('interactionCreate', async interaction => {
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
                 .setDescription(
-                    `Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n\n` +
-                    `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                    `𝑮𝒂𝒎𝒆𝒔 <a:00000_purple_moon:1462859469699551314>\n` +
-                    `<:cs2:1452670171738275910> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.cs2}>\n` +
-                    `<a:VALO:1452363572679016568> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.valo}>\n` +
-                    `<:fortnite:1488994596141924534> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fortnite}>\n` +
-                    `🔥 <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fire}>\n` +
-                    `<:Rocket_Leauge:1488994687363842098> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.rocket}>\n` +
-                    `<:Amongus:1489036461427654697> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.amongus}>\n` +
-                    `<:minecraft:1452670793539391559> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.minecraft}>\n` +
-                    `<:ROBLOX:1452605848881987758> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.roblox}>\n` +
-                    `⚽️ <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.soccer}>\n` +
-                    `🚙 <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.bluecar}>\n` +
-                    `<:efootbal:1451987881429045290> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.pes}>\n` +
-                    `🏎️ <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.racecar}>\n` +
-                    `<a:FIVEM:1452363350808858654> <a:ALG_arrow_right:1462857931669246197> <@&${ROLES.GAMES.fivem}>`
+                    `🎮 **NOCTURNE — GAMING ROLES**\n` +
+                    `Choose your favorite games and find your teammates.\n\n` +
+                    `✨ **GAMES** 🌑\n\n` +
+                    `<@&${ROLES.GAMES.cs2}> ➔ 🔫\n` +
+                    `<@&${ROLES.GAMES.valo}> ➔ 🎯\n` +
+                    `<@&${ROLES.GAMES.fortnite}> ➔ 🪂\n` +
+                    `<@&${ROLES.GAMES.fire}> ➔ 🔥\n` +
+                    `<@&${ROLES.GAMES.rocket}> ➔ 🚀\n` +
+                    `<@&${ROLES.GAMES.amongus}> ➔ 🕵🏼‍♂️\n` +
+                    `<@&${ROLES.GAMES.minecraft}> ➔ ⚒️\n` +
+                    `<@&${ROLES.GAMES.roblox}> ➔ 🧱\n` +
+                    `<@&${ROLES.GAMES.soccer}> ➔ ⚽️\n` +
+                    `<@&${ROLES.GAMES.bluecar}> ➔ 🚙\n` +
+                    `<@&${ROLES.GAMES.pes}> ➔ 🥅\n` +
+                    `<@&${ROLES.GAMES.racecar}> ➔ 🏎️\n` +
+                    `<@&${ROLES.GAMES.fivem}> ➔ 🚔\n\n` +
+                    `React below to get your role. Remove your reaction to remove it.\n` +
+                    `*CHOOSE YOUR ROLES*`
                 );
 
             const sentMsg = await interaction.channel.send({ embeds: [embed] });
             
-            // إضافة التفاعلات الـ 13 تلقائياً
+            // وضع الـ 13 تفاعل (Reactions) تلقائياً بالترتيب
             const emojiKeys = Object.keys(reactionRoleMap);
             for (const em of emojiKeys) {
                 await sentMsg.react(em).catch(() => {});
             }
 
-            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب داخل Embed وتفعيل التفاعلات بنجاح!' });
+            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب بالترتيب الجديد وتفعيل الـ 13 تفاعل بنجاح!' });
         }
     }
 
