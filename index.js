@@ -66,7 +66,8 @@ const CHANNELS = {
     GOODBYE: '1569090865551638709',     
     TICKET_SETUP: '1559364091368181870',   
     STATIC_ROLES: '1565462147100844154',   
-    GAMES_ROLES: '1560471208766476298'     
+    GAMES_ROLES: '1560471208766476298',
+    CLUB_ROLES: '1571652064960839821'     
 };
 
 // الأيدي الخاصة بالرتب
@@ -92,6 +93,18 @@ const ROLES = {
         'pes': '1560455046729170984',
         'racecar': '1560455551723241502',
         'fivem': '1560455646644666429'
+    },
+
+    CLUBS: {
+        'rma': '1571652873689763850',
+        'fcb': '1571653166284546048',
+        'psg': '1571653321326858271',
+        'mci': '1571653464260616285',
+        'arsenal': '1571653762005864528',
+        'bayern': '1571653954595459192',
+        'mca': '1571654308863152158',
+        'mco': '1571654389695905832',
+        'usma': '1571654560341032960'
     }
 };
 
@@ -113,7 +126,7 @@ client.on('ready', async () => {
         }
 
         // ==========================================
-        // 🚀 الإرسال التلقائي للوحات (التذاكر + الرتب الثابتة + رتب الألعاب) بدون /
+        // 🚀 الإرسال التلقائي للوحات (التذاكر + الرتب الثابتة + رتب الألعاب + أندية كرة القدم)
         // ==========================================
         try {
             // 1. إرسال لوحة التذاكر تلقائياً في روم التذاكر
@@ -185,7 +198,7 @@ client.on('ready', async () => {
                         .setDescription(
                             `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
                             `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                            `        𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
+                            `         𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                             `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                             `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
@@ -204,18 +217,10 @@ client.on('ready', async () => {
                     const sentMsg = await gamesRolesChannel.send({ embeds: [gamesEmbed] }).catch(() => {});
                     if (sentMsg) {
                         const emojisToReact = [
-                            '1571567392373346405',
-                            '1571567223259271319',
-                            '1571337470816165968',
-                            '1571338358452519034',
-                            '1571339257149263872',
-                            '1571565515535814819',
-                            '1571562285267419337',
-                            '1571566690062442671',
-                            '1571568452232024155',
-                            '1571567502343798905',
-                            '1571566973022638230',
-                            '1571568011859468328',
+                            '1571567392373346405', '1571567223259271319', '1571337470816165968',
+                            '1571338358452519034', '1571339257149263872', '1571565515535814819',
+                            '1571562285267419337', '1571566690062442671', '1571568452232024155',
+                            '1571567502343798905', '1571566973022638230', '1571568011859468328',
                             '1571598558422110331'
                         ];
                         for (const emId of emojisToReact) {
@@ -223,6 +228,45 @@ client.on('ready', async () => {
                         }
                     }
                     console.log('✅ تم إرسال لوحة رتب الألعاب تلقائياً وتفعيل الـ 13 تفاعل بنجاح.');
+                }
+            }
+
+            // 4. الإرسال التلقائي لوحة أندية كرة القدم تلقائياً في روم Club Roles
+            const clubRolesChannel = guild.channels.cache.get(CHANNELS.CLUB_ROLES);
+            if (clubRolesChannel) {
+                const messages = await clubRolesChannel.messages.fetch({ limit: 5 }).catch(() => null);
+                const hasClubMsg = messages ? messages.some(m => m.author.id === client.user.id && m.embeds.length > 0) : false;
+
+                if (!hasClubMsg) {
+                    const clubEmbed = new EmbedBuilder()
+                        .setColor('#2b2d31')
+                        .setDescription(
+                            `⚽ Choisis ton club préféré et récupère ton rôle ! 🏆🔥\n` +
+                            `🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
+                            `         𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
+                            `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
+                            `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
+                            `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
+                            `<:MCI:1571663050124038254> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mci}>\n` +
+                            `<:Arsenal:1571663557207265290> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.arsenal}>\n` +
+                            `<:Bayern_Munich:1571663424763461754> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.bayern}>\n` +
+                            `<:MCA:1571659714188808282> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mca}>\n` +
+                            `<:MCO:1571659571003392082> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mco}>\n` +
+                            `<:USMA:1571659813442691173> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.usma}>`
+                        );
+
+                    const sentClubMsg = await clubRolesChannel.send({ embeds: [clubEmbed] }).catch(() => {});
+                    if (sentClubMsg) {
+                        const clubEmojis = [
+                            '1571660508053114912', '1571660548615966781', '1571659218761687232',
+                            '1571663050124038254', '1571663557207265290', '1571663424763461754',
+                            '1571659714188808282', '1571659571003392082', '1571659813442691173'
+                        ];
+                        for (const emId of clubEmojis) {
+                            await sentClubMsg.react(emId).catch(() => {});
+                        }
+                    }
+                    console.log('✅ تم إرسال لوحة Club Roles وتفعيل تفاعلات الأندية تلقائياً بنجاح.');
                 }
             }
         } catch (e) {
@@ -236,6 +280,7 @@ client.on('ready', async () => {
         new SlashCommandBuilder().setName('leave').setDescription('خروج البوت من روم الصوت'),
         new SlashCommandBuilder().setName('ticket').setDescription('إرسال لوحة نظام التذاكر والدعم الفني'),
         new SlashCommandBuilder().setName('games-roles').setDescription('إرسال لوحة اختيار رتب الألعاب'),
+        new SlashCommandBuilder().setName('club-roles').setDescription('إرسال لوحة اختيار رتب الأندية'),
         new SlashCommandBuilder().setName('setup-roles').setDescription('إرسال لوحة أزرار الرتب الثابتة')
     ];
 
@@ -603,9 +648,10 @@ client.on('guildMemberRemove', async member => {
 });
 
 // ==========================================
-// 3. خريطة تفاعلات رتب الألعاب بالآدي الحقيقي للإيموجي
+// 3. خرائط تفاعلات رتب الألعاب والأندية
 // ==========================================
 const reactionRoleMap = {
+    // الألعاب
     '1571567392373346405': ROLES.GAMES.cs2,       // CS2
     '1571567223259271319': ROLES.GAMES.valo,      // Valorant
     '1571337470816165968': ROLES.GAMES.fortnite,  // Fortnite
@@ -618,7 +664,18 @@ const reactionRoleMap = {
     '1571567502343798905': ROLES.GAMES.bluecar,   // Asseto Corsa
     '1571566973022638230': ROLES.GAMES.pes,       // Efootball
     '1571568011859468328': ROLES.GAMES.racecar,   // Forza Horizon
-    '1571598558422110331': ROLES.GAMES.fivem      // Five M
+    '1571598558422110331': ROLES.GAMES.fivem,      // Five M
+
+    // أندية كرة القدم (Club Roles)
+    '1571660508053114912': ROLES.CLUBS.rma,       // Real Madrid
+    '1571660548615966781': ROLES.CLUBS.fcb,       // Barcelona
+    '1571659218761687232': ROLES.CLUBS.psg,       // PSG
+    '1571663050124038254': ROLES.CLUBS.mci,       // Manchester City
+    '1571663557207265290': ROLES.CLUBS.arsenal,   // Arsenal
+    '1571663424763461754': ROLES.CLUBS.bayern,    // Bayern Munich
+    '1571659714188808282': ROLES.CLUBS.mca,       // MCA
+    '1571659571003392082': ROLES.CLUBS.mco,       // MCO
+    '1571659813442691173': ROLES.CLUBS.usma       // USMA
 };
 
 client.on('messageReactionAdd', async (reaction, user) => {
@@ -626,7 +683,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (reaction.partial) await reaction.fetch().catch(() => {});
     if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
-    if (reaction.message.channel.id === CHANNELS.GAMES_ROLES) {
+    if (reaction.message.channel.id === CHANNELS.GAMES_ROLES || reaction.message.channel.id === CHANNELS.CLUB_ROLES) {
         const emojiKey = reaction.emoji.id;
         const roleId = reactionRoleMap[emojiKey];
         if (!roleId) return;
@@ -644,7 +701,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (reaction.partial) await reaction.fetch().catch(() => {});
     if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
-    if (reaction.message.channel.id === CHANNELS.GAMES_ROLES) {
+    if (reaction.message.channel.id === CHANNELS.GAMES_ROLES || reaction.message.channel.id === CHANNELS.CLUB_ROLES) {
         const emojiKey = reaction.emoji.id;
         const roleId = reactionRoleMap[emojiKey];
         if (!roleId) return;
@@ -763,24 +820,55 @@ client.on('interactionCreate', async interaction => {
 
             const sentMsg = await interaction.channel.send({ embeds: [embed] });
             const emojisToReact = [
-                '1571567392373346405',
-                '1571567223259271319',
-                '1571337470816165968',
-                '1571338358452519034',
-                '1571339257149263872',
-                '1571565515535814819',
-                '1571562285267419337',
-                '1571566690062442671',
-                '1571568452232024155',
-                '1571567502343798905',
-                '1571566973022638230',
-                '1571568011859468328',
+                '1571567392373346405', '1571567223259271319', '1571337470816165968',
+                '1571338358452519034', '1571339257149263872', '1571565515535814819',
+                '1571562285267419337', '1571566690062442671', '1571568452232024155',
+                '1571567502343798905', '1571566973022638230', '1571568011859468328',
                 '1571598558422110331'
             ];
             for (const emId of emojisToReact) {
                 await sentMsg.react(emId).catch(() => {});
             }
             await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب بالترتيب المطلوب وتفعيل التفاعلات بنجاح!' });
+        }
+
+        if (commandName === 'club-roles') {
+            if (interaction.channel.id !== CHANNELS.CLUB_ROLES) {
+                return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
+            }
+            await interaction.deferReply({ ephemeral: true });
+            try {
+                const fetched = await interaction.channel.messages.fetch({ limit: 50 });
+                await interaction.channel.bulkDelete(fetched, true).catch(() => {});
+            } catch (e) {}
+
+            const embed = new EmbedBuilder()
+                .setColor('#2b2d31')
+                .setDescription(
+                    `⚽ Choisis ton club préféré et récupère ton rôle ! 🏆🔥\n` +
+                    `🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
+                    `         𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
+                    `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
+                    `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
+                    `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
+                    `<:MCI:1571663050124038254> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mci}>\n` +
+                    `<:Arsenal:1571663557207265290> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.arsenal}>\n` +
+                    `<:Bayern_Munich:1571663424763461754> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.bayern}>\n` +
+                    `<:MCA:1571659714188808282> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mca}>\n` +
+                    `<:MCO:1571659571003392082> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mco}>\n` +
+                    `<:USMA:1571659813442691173> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.usma}>`
+                );
+
+            const sentClubMsg = await interaction.channel.send({ embeds: [embed] });
+            const clubEmojis = [
+                '1571660508053114912', '1571660548615966781', '1571659218761687232',
+                '1571663050124038254', '1571663557207265290', '1571663424763461754',
+                '1571659714188808282', '1571659571003392082', '1571659813442691173'
+            ];
+            for (const emId of clubEmojis) {
+                await sentClubMsg.react(emId).catch(() => {});
+            }
+            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الأندية بالترتيب المطلوب وتفعيل التفاعلات بنجاح!' });
         }
     }
 
