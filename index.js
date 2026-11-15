@@ -1,4 +1,4 @@
-const { 
+Const { 
     Client, 
     GatewayIntentBits, 
     Partials, 
@@ -668,9 +668,9 @@ client.on('interactionCreate', async interaction => {
                     'اضغط على الأزرار بالأسفل لتبدأ معنا! 👇'
                 );
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 Districtian').setStyle(ButtonStyle.Primary),
-                new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
-                new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
+                new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝐧').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId('role_minigames').setLabel('𝐌𝐢𝐧𝐢 𝐆𝐚𝐦𝐞𝘀 🎮').setStyle(ButtonStyle.Danger),
+                new ButtonBuilder().setCustomId('role_verify').setLabel('𝐕𝐄𝐑𝐈𝐅𝐘 ✅').setStyle(ButtonStyle.Success)
             );
             await interaction.editReply({ embeds: [embed], components: [row] });
         }
