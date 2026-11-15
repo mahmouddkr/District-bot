@@ -115,7 +115,7 @@ client.on('ready', async () => {
         }
 
         // ==========================================
-        // 🚀 الإرسال التلقائي للوحات (التذاكر + الرتب الثابتة) بدون /
+        // 🚀 الإرسال التلقائي للوحات (التذاكر + الرتب الثابتة + رتب الألعاب) بدون /
         // ==========================================
         try {
             // 1. إرسال لوحة التذاكر تلقائياً في روم التذاكر
@@ -172,6 +172,58 @@ client.on('ready', async () => {
 
                     await staticRolesChannel.send({ embeds: [rolesEmbed], components: [rowRoles] }).catch(() => {});
                     console.log('✅ تم إرسال لوحة الرتب الثابتة تلقائياً بنجاح.');
+                }
+            }
+
+            // 3. الإرسال التلقائي لوحة رتب الألعاب تلقائياً في روم الألعاب
+            const gamesRolesChannel = guild.channels.cache.get(CHANNELS.GAMES_ROLES);
+            if (gamesRolesChannel) {
+                const messages = await gamesRolesChannel.messages.fetch({ limit: 5 }).catch(() => null);
+                const hasGameMsg = messages ? messages.some(m => m.author.id === client.user.id && m.embeds.length > 0) : false;
+
+                if (!hasGameMsg) {
+                    const gamesEmbed = new EmbedBuilder()
+                        .setColor('#2b2d31')
+                        .setDescription(
+                            `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
+                            `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
+                            `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
+                            `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
+                            `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
+                            `<:Free_Fire:1571338358452519034> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fire}>\n` +
+                            `<:RocketLeague:1571339257149263872> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.rocket}>\n` +
+                            `<:Amongus:1571565515535814819> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.amongus}>\n` +
+                            `<:emoji_12:1571562285267419337> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.minecraft}>\n` +
+                            `<:Roblox:1571566690062442671> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.roblox}>\n` +
+                            `<:EaSportFc:1571568452232024155> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.soccer}>\n` +
+                            `<:Asseto_Corsa:1571567502343798905> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.bluecar}>\n` +
+                            `<:emoji_12:1571566973022638230> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.pes}>\n` +
+                            `<:Forza_Horizon:1571568011859468328> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.racecar}>\n` +
+                            `<:Fivem:1571598558422110331> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fivem}>`
+                        );
+
+                    const sentMsg = await gamesRolesChannel.send({ embeds: [gamesEmbed] }).catch(() => {});
+                    if (sentMsg) {
+                        const emojisToReact = [
+                            '1571567392373346405',
+                            '1571567223259271319',
+                            '1571337470816165968',
+                            '1571338358452519034',
+                            '1571339257149263872',
+                            '1571565515535814819',
+                            '1571562285267419337',
+                            '1571566690062442671',
+                            '1571568452232024155',
+                            '1571567502343798905',
+                            '1571566973022638230',
+                            '1571568011859468328',
+                            '1571598558422110331'
+                        ];
+                        for (const emId of emojisToReact) {
+                            await sentMsg.react(emId).catch(() => {});
+                        }
+                    }
+                    console.log('✅ تم إرسال لوحة رتب الألعاب تلقائياً وتفعيل الـ 13 تفاعل بنجاح.');
                 }
             }
         } catch (e) {
@@ -551,21 +603,23 @@ client.on('guildMemberRemove', async member => {
     await channel.send({ content: `${member}`, embeds: [embed] }).catch(() => {});
 });
 
-// خريطة التفاعلات لألعاب رتب الألعاب
+// ==========================================
+// 3. خريطة تفاعلات رتب الألعاب بالآدي الحقيقي للإيموجي
+// ==========================================
 const reactionRoleMap = {
-    'CS2_EMOJI_ID': ROLES.GAMES.cs2,       
-    'VALO_EMOJI_ID': ROLES.GAMES.valo,      
-    'FORTNITE_EMOJI_ID': ROLES.GAMES.fortnite,  
-    'FIRE_EMOJI_ID': ROLES.GAMES.fire,       
-    'ROCKET_EMOJI_ID': ROLES.GAMES.rocket,    
-    'AMONGUS_EMOJI_ID': ROLES.GAMES.amongus,   
-    'MINECRAFT_EMOJI_ID': ROLES.GAMES.minecraft, 
-    'ROBLOX_EMOJI_ID': ROLES.GAMES.roblox,    
-    'SOCCER_EMOJI_ID': ROLES.GAMES.soccer,    
-    'BLUECAR_EMOJI_ID': ROLES.GAMES.bluecar,   
-    'PES_EMOJI_ID': ROLES.GAMES.pes,       
-    'RACECAR_EMOJI_ID': ROLES.GAMES.racecar,   
-    'FIVEM_EMOJI_ID': ROLES.GAMES.fivem      
+    '1571567392373346405': ROLES.GAMES.cs2,       // CS2
+    '1571567223259271319': ROLES.GAMES.valo,      // Valorant
+    '1571337470816165968': ROLES.GAMES.fortnite,  // Fortnite
+    '1571338358452519034': ROLES.GAMES.fire,       // Free Fire
+    '1571339257149263872': ROLES.GAMES.rocket,    // Rocket League
+    '1571565515535814819': ROLES.GAMES.amongus,   // Among Us
+    '1571562285267419337': ROLES.GAMES.minecraft, // Minecraft
+    '1571566690062442671': ROLES.GAMES.roblox,    // Roblox
+    '1571568452232024155': ROLES.GAMES.soccer,    // Ea Sport Fc
+    '1571567502343798905': ROLES.GAMES.bluecar,   // Asseto Corsa
+    '1571566973022638230': ROLES.GAMES.pes,       // Efootball
+    '1571568011859468328': ROLES.GAMES.racecar,   // Forza Horizon
+    '1571598558422110331': ROLES.GAMES.fivem      // Five M
 };
 
 client.on('messageReactionAdd', async (reaction, user) => {
@@ -574,7 +628,7 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
     if (reaction.message.channel.id === CHANNELS.GAMES_ROLES) {
-        const emojiKey = reaction.emoji.id || reaction.emoji.name;
+        const emojiKey = reaction.emoji.id;
         const roleId = reactionRoleMap[emojiKey];
         if (!roleId) return;
 
@@ -592,7 +646,7 @@ client.on('messageReactionRemove', async (reaction, user) => {
     if (reaction.message.partial) await reaction.message.fetch().catch(() => {});
 
     if (reaction.message.channel.id === CHANNELS.GAMES_ROLES) {
-        const emojiKey = reaction.emoji.id || reaction.emoji.name;
+        const emojiKey = reaction.emoji.id;
         const roleId = reactionRoleMap[emojiKey];
         if (!roleId) return;
 
@@ -692,28 +746,41 @@ client.on('interactionCreate', async interaction => {
                 .setDescription(
                     `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
                     `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                    `GAMES <:GAMES_EMOJI:GAMES_ID>\n\n` +
-                    `<:cs2:CS2_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.cs2}>\n` +
-                    `<:valo:VALO_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.valo}>\n` +
-                    `<:fortnite:FORTNITE_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.fortnite}>\n` +
-                    `<:fire:FIRE_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.fire}>\n` +
-                    `<:rocket:ROCKET_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.rocket}>\n` +
-                    `<:amongus:AMONGUS_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.amongus}>\n` +
-                    `<:minecraft:MINECRAFT_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.minecraft}>\n` +
-                    `<:roblox:ROBLOX_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.roblox}>\n` +
-                    `<:soccer:SOCCER_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.soccer}>\n` +
-                    `<:bluecar:BLUECAR_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.bluecar}>\n` +
-                    `<:pes:PES_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.pes}>\n` +
-                    `<:racecar:RACECAR_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.racecar}>\n` +
-                    `<:fivem:FIVEM_EMOJI_ID> <:arrow:ARROW_ID> <@&${ROLES.GAMES.fivem}>`
+                    `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
+                    `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
+                    `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
+                    `<:Free_Fire:1571338358452519034> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fire}>\n` +
+                    `<:RocketLeague:1571339257149263872> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.rocket}>\n` +
+                    `<:Amongus:1571565515535814819> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.amongus}>\n` +
+                    `<:emoji_12:1571562285267419337> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.minecraft}>\n` +
+                    `<:Roblox:1571566690062442671> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.roblox}>\n` +
+                    `<:EaSportFc:1571568452232024155> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.soccer}>\n` +
+                    `<:Asseto_Corsa:1571567502343798905> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.bluecar}>\n` +
+                    `<:emoji_12:1571566973022638230> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.pes}>\n` +
+                    `<:Forza_Horizon:1571568011859468328> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.racecar}>\n` +
+                    `<:Fivem:1571598558422110331> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fivem}>`
                 );
 
             const sentMsg = await interaction.channel.send({ embeds: [embed] });
-            const emojiKeys = Object.keys(reactionRoleMap);
-            for (const em of emojiKeys) {
-                await sentMsg.react(em).catch(() => {});
+            const emojisToReact = [
+                '1571567392373346405',
+                '1571567223259271319',
+                '1571337470816165968',
+                '1571338358452519034',
+                '1571339257149263872',
+                '1571565515535814819',
+                '1571562285267419337',
+                '1571566690062442671',
+                '1571568452232024155',
+                '1571567502343798905',
+                '1571566973022638230',
+                '1571568011859468328',
+                '1571598558422110331'
+            ];
+            for (const emId of emojisToReact) {
+                await sentMsg.react(emId).catch(() => {});
             }
-            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب بالترتيب المطلوب وتفعيل الـ 13 تفاعل بنجاح!' });
+            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب بالترتيب المطلوب وتفعيل التفاعلات بنجاح!' });
         }
     }
 
@@ -776,7 +843,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
         if (interaction.customId === 'claim_ticket') {
-            await interaction.reply({ content: `🙋‍♂️ تم استلاستحداث التذكرة بواسطة ${interaction.member}.` }).catch(() => {});
+            await interaction.reply({ content: `🙋‍♂️ تم استلام التذكرة بواسطة ${interaction.member}.` }).catch(() => {});
         }
         if (interaction.customId === 'close_ticket') {
             await interaction.reply({ content: '🔒 سيتم إغلاق التذكرة خلال ثوانٍ...' }).catch(() => {});
