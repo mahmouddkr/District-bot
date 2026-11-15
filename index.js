@@ -135,7 +135,7 @@ client.on('ready', async () => {
                     const row = new ActionRowBuilder().addComponents(selectMenu);
                     const ticketEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
-                        .setTitle('الدعم الفني - District')
+                        .setTitle('الدعم الفني - 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓')
                         .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
                         .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
 
@@ -153,7 +153,7 @@ client.on('ready', async () => {
                 if (!hasBotRoles) {
                     const rolesEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
-                        .setTitle('🌟 أهلاً بك في سيرفر 🌹 District 🌟')
+                        .setTitle('🌟 أهلاً بك في سيرفر 🌹 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓 🌟')
                         .setDescription(
                             'مرحباً بك يا صديقي في مجتمعنا!\n\n' +
                             '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n' +
@@ -163,9 +163,9 @@ client.on('ready', async () => {
                         );
 
                     const rowRoles = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 Districtian').setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
+                        new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝒏').setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId('role_minigames').setLabel('𝐌𝐢𝐧𝐢 𝐆𝐚𝐦𝐞𝐬 🎮').setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId('role_verify').setLabel('𝐕𝐄𝐑𝐈𝐅𝐘 ✅').setStyle(ButtonStyle.Success)
                     );
 
                     await staticRolesChannel.send({ embeds: [rolesEmbed], components: [rowRoles] }).catch(() => {});
@@ -185,7 +185,7 @@ client.on('ready', async () => {
                         .setDescription(
                             `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
                             `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                            `𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
+                            `        𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                             `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                             `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
@@ -701,7 +701,7 @@ client.on('interactionCreate', async interaction => {
             const row = new ActionRowBuilder().addComponents(selectMenu);
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
-                .setTitle('الدعم الفني - District')
+                .setTitle('الدعم الفني - 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓')
                 .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
                 .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
             await interaction.editReply({ embeds: [embed], components: [row] });
@@ -714,7 +714,7 @@ client.on('interactionCreate', async interaction => {
             await interaction.deferReply({ ephemeral: true });
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
-                .setTitle('🌟 أهلاً بك في سيرفر 🌹 District 🌟')
+                .setTitle('🌟 أهلاً بك في سيرفر 🌹 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓 🌟')
                 .setDescription(
                     'مرحباً بك يا صديقي في مجتمعنا!\n\n' +
                     '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n' +
@@ -745,7 +745,7 @@ client.on('interactionCreate', async interaction => {
                 .setDescription(
                     `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
                     `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                    `𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
+                    `         𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                     `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                     `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                     `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
