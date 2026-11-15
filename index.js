@@ -502,7 +502,7 @@ const reactionRoleMap = {
     '1452363350808858654': ROLES.GAMES.fivem      // fivem
 };
 
-// إضافة الرول عند وضع التفاعل بالإيموجي المخصص
+// إضافة الرول عند وضع التفاعل بالإيموجي
 client.on('messageReactionAdd', async (reaction, user) => {
     if (user.bot) return;
     if (reaction.partial) await reaction.fetch().catch(() => {});
@@ -617,7 +617,7 @@ client.on('interactionCreate', async interaction => {
                 );
 
             const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('role_districtian').setLabel(' 🌌 Districtian').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 Districtian').setStyle(ButtonStyle.Primary),
                 new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
                 new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
             );
@@ -625,7 +625,7 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ embeds: [embed], components: [row] });
         }
 
-        // أمر /games-roles
+        // أمر /games-roles (المرتب والمضبوط تماماً لتظهر الإيموجيات كأشكال حقيقية ومرئية)
         if (commandName === 'games-roles') {
             if (interaction.channel.id !== CHANNELS.GAMES_ROLES) {
                 return interaction.reply({ content: '❌ ليس الروم المخصص!', ephemeral: true });
@@ -633,7 +633,7 @@ client.on('interactionCreate', async interaction => {
 
             await interaction.deferReply({ ephemeral: true });
 
-            // مسح الرسائل السابقة في الروم
+            // مسح الرسائل القديمة في الروم
             try {
                 const fetched = await interaction.channel.messages.fetch({ limit: 50 });
                 await interaction.channel.bulkDelete(fetched, true).catch(() => {});
@@ -662,7 +662,7 @@ client.on('interactionCreate', async interaction => {
 
             const sentMsg = await interaction.channel.send({ embeds: [embed] });
             
-            // إضافة التفاعلات الـ 13 تلقائياً باستخدام مفاتيح خريطة الإيموجيات
+            // إضافة التفاعلات الـ 13 تلقائياً
             const emojiKeys = Object.keys(reactionRoleMap);
             for (const em of emojiKeys) {
                 await sentMsg.react(em).catch(() => {});
