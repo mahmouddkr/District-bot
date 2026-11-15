@@ -100,8 +100,6 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 client.on('ready', async () => {
     console.log(`✅ Logged in as ${client.user.tag}! District Bot is Online 24/7.`);
-    
-    // تعيين الحالة District 🌹
     client.user.setActivity('District 🌹', { type: 3 });
 
     for (const guild of client.guilds.cache.values()) {
@@ -187,6 +185,7 @@ client.on('ready', async () => {
                         .setDescription(
                             `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
                             `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
+                            `𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                             `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                             `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
@@ -725,7 +724,7 @@ client.on('interactionCreate', async interaction => {
                 );
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝒏').setStyle(ButtonStyle.Primary),
-                new ButtonBuilder().setCustomId('role_minigames').setLabel('𝐌𝐢𝐧𝐢 𝐆𝐚𝐦𝐞𝘀 🎮').setStyle(ButtonStyle.Danger),
+                new ButtonBuilder().setCustomId('role_minigames').setLabel('𝐌𝐢𝐧𝐢 𝐆𝐚𝐦𝐞𝐬 🎮').setStyle(ButtonStyle.Danger),
                 new ButtonBuilder().setCustomId('role_verify').setLabel('𝐕𝐄𝐑𝐈𝐅𝐘 ✅').setStyle(ButtonStyle.Success)
             );
             await interaction.editReply({ embeds: [embed], components: [row] });
@@ -746,6 +745,7 @@ client.on('interactionCreate', async interaction => {
                 .setDescription(
                     `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
                     `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
+                    `𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                     `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                     `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                     `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
