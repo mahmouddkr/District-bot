@@ -165,9 +165,9 @@ client.on('ready', async () => {
                         );
 
                     const rowRoles = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 Districtian').setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId('role_minigames').setLabel('Mini Games 🎮').setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId('role_verify').setLabel('Verify ✅').setStyle(ButtonStyle.Success)
+                        new ButtonBuilder().setCustomId('role_districtian').setLabel('🌌 𝑫𝒊𝒔𝒕𝒓𝒊𝒄𝒕𝒊𝒂𝒏').setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId('role_minigames').setLabel('𝐌𝐢𝐧𝐢 𝐆𝐚𝐦𝐞𝐬 🎮').setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId('role_verify').setLabel('𝑽𝑬𝑹𝑰𝑭𝒀 ✅').setStyle(ButtonStyle.Success)
                     );
 
                     await staticRolesChannel.send({ embeds: [rolesEmbed], components: [rowRoles] }).catch(() => {});
