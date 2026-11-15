@@ -803,7 +803,7 @@ client.on('interactionCreate', async interaction => {
                     `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !\n` +
                     `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
                     `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
-                    `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
+                    `#<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                     `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                     `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
                     `<:Free_Fire:1571338358452519034> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fire}>\n` +
