@@ -186,7 +186,7 @@ client.on('ready', async () => {
                 }
             }
 
-            // 3. الإرسال التلقائي لوحة رتب الألعاب تلقائياً في روم الألعاب
+            // 3. الإرسال التلقائي لوحة رتب الألعاب تلقائياً (بالخط العريض والبارز)
             const gamesRolesChannel = guild.channels.cache.get(CHANNELS.GAMES_ROLES);
             if (gamesRolesChannel) {
                 const messages = await gamesRolesChannel.messages.fetch({ limit: 5 }).catch(() => null);
@@ -196,9 +196,9 @@ client.on('ready', async () => {
                     const gamesEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
-                            `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                            `         𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
+                            `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !\n` +
+                            `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
+                            `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                             `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                             `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
@@ -227,11 +227,11 @@ client.on('ready', async () => {
                             await sentMsg.react(emId).catch(() => {});
                         }
                     }
-                    console.log('✅ تم إرسال لوحة رتب الألعاب تلقائياً وتفعيل الـ 13 تفاعل بنجاح.');
+                    console.log('✅ تم إرسال لوحة رتب الألعاب تلقائياً بالخط البارز وتفعيل التفاعلات بنجاح.');
                 }
             }
 
-            // 4. الإرسال التلقائي لوحة أندية كرة القدم تلقائياً في روم Club Roles
+            // 4. الإرسال التلقائي لوحة أندية كرة القدم تلقائياً (بالخط العريض والبارز)
             const clubRolesChannel = guild.channels.cache.get(CHANNELS.CLUB_ROLES);
             if (clubRolesChannel) {
                 const messages = await clubRolesChannel.messages.fetch({ limit: 5 }).catch(() => null);
@@ -241,9 +241,9 @@ client.on('ready', async () => {
                     const clubEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `⚽ Choisis ton club préféré et récupère ton rôle ! 🏆🔥\n` +
-                            `🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
-                            `         𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
+                            `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !\n` +
+                            `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
+                            `# 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                             `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
                             `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
                             `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
@@ -266,7 +266,7 @@ client.on('ready', async () => {
                             await sentClubMsg.react(emId).catch(() => {});
                         }
                     }
-                    console.log('✅ تم إرسال لوحة Club Roles وتفعيل تفاعلات الأندية تلقائياً بنجاح.');
+                    console.log('✅ تم إرسال لوحة Club Roles (بالخط البارز) بنجاح.');
                 }
             }
         } catch (e) {
@@ -800,9 +800,9 @@ client.on('interactionCreate', async interaction => {
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
                 .setDescription(
-                    `🎮 Choisis tes jeux préférés et récupère tes rôles ! 🎯🔥\n` +
-                    `🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا ! 🎮⚡\n\n` +
-                    `         𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
+                    `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !\n` +
+                    `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
+                    `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                     `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                     `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                     `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
@@ -829,7 +829,7 @@ client.on('interactionCreate', async interaction => {
             for (const emId of emojisToReact) {
                 await sentMsg.react(emId).catch(() => {});
             }
-            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب بالترتيب المطلوب وتفعيل التفاعلات بنجاح!' });
+            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الألعاب بالخط البارز وتفعيل التفاعلات بنجاح!' });
         }
 
         if (commandName === 'club-roles') {
@@ -845,9 +845,9 @@ client.on('interactionCreate', async interaction => {
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
                 .setDescription(
-                    `⚽ Choisis ton club préféré et récupère ton rôle ! 🏆🔥\n` +
-                    `🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
-                    `         𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
+                    `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !\n` +
+                    `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
+                    `# 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                     `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
                     `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
                     `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
@@ -868,7 +868,7 @@ client.on('interactionCreate', async interaction => {
             for (const emId of clubEmojis) {
                 await sentClubMsg.react(emId).catch(() => {});
             }
-            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الأندية بالترتيب المطلوب وتفعيل التفاعلات بنجاح!' });
+            await interaction.editReply({ content: '✅ تم إرسال لوحة رتب الأندية بالخط البارز وتفعيل التفاعلات بنجاح!' });
         }
     }
 
