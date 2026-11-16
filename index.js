@@ -214,7 +214,7 @@ client.on('ready', async () => {
                         .setDescription(
                             `### 🎮 Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
-                            `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
+                            `## 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                             `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                             `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
@@ -256,7 +256,7 @@ client.on('ready', async () => {
                     const clubEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### ⚽ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
+                            `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
                             `## 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                             `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
@@ -428,7 +428,7 @@ client.on('roleDelete', async role => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// مراقبة تعديل الرولات (تحريك الترتيب + تغيير الصلاحيات أو الاسم)
+// مراقبة تعديل الرولات (تغيير الصلاحيات المسموحة والممنوعة + تحريك الترتيب)
 client.on('roleUpdate', async (oldRole, newRole) => {
     const guild = newRole.guild;
     const logChannel = guild.channels.cache.get(CHANNELS.ROLES_LOG);
@@ -437,7 +437,7 @@ client.on('roleUpdate', async (oldRole, newRole) => {
     await wait(1500);
     let executor = 'مشرف غير معروف';
 
-    // 1. مراقبة تغيير الصلاحيات أو الاسم أو اللون
+    // 1. مراقبة تغيير الصلاحيات (Permissions) أو الاسم
     if (oldRole.permissions.bitfield !== newRole.permissions.bitfield || oldRole.name !== newRole.name) {
         try {
             const logs = await guild.fetchAuditLogs({ limit: 3, type: AuditLogEvent.RoleUpdate });
@@ -446,18 +446,36 @@ client.on('roleUpdate', async (oldRole, newRole) => {
         } catch (e) {}
 
         let changes = [];
-        if (oldRole.name !== newRole.name) changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
-        if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) changes.push(`🔒 **تغيير الصلاحيات أو السماح/المنع**`);
+        if (oldRole.name !== newRole.name) {
+            changes.push(`📌 **تغيير الاسم:** من \`${oldRole.name}\` إلى \`${newRole.name}\``);
+        }
+
+        if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) {
+            const oldPerms = new PermissionsBitField(oldRole.permissions.bitfield);
+            const newPerms = new PermissionsBitField(newRole.permissions.bitfield);
+
+            const addedPerms = newPerms.toArray().filter(p => !oldPerms.has(p));
+            const removedPerms = oldPerms.toArray().filter(p => !newPerms.has(p));
+
+            if (addedPerms.length > 0) {
+                changes.push(`✅ **تم السماح (Allow):** \`${addedPerms.join(', ')}\``);
+            }
+            if (removedPerms.length > 0) {
+                changes.push(`❌ **تم الرفض/الإزالة (Deny/Remove):** \`${removedPerms.join(', ')}\``);
+            }
+        }
+
+        if (changes.length === 0) return;
 
         const embed = new EmbedBuilder()
-            .setTitle('🛠️ **Role Updated / تعديل خصائص رول**')
-            .setDescription(`🏷️ **الرول المعدل:** ${newRole}\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
+            .setTitle('🛠️ **Role Permissions Updated / تعديل صلاحيات رول**')
+            .setDescription(`🏷️ **الرول المعدل:** ${newRole}\n\n${changes.join('\n')}\n\n🛡️ **صاحب الفعل (By):** ${executor}`)
             .setColor('#e67e22')
             .setTimestamp();
         return logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    // 2. مراقبة تحريك مكان رول
+    // 2. مراقبة تحريك مكان رول (الترتيب)
     if (oldRole.position !== newRole.position) {
         try {
             const logs = await guild.fetchAuditLogs({ limit: 3, type: AuditLogEvent.RoleUpdate });
@@ -625,12 +643,11 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// مراقبة تعديل رولات الأعضاء (تتجاهل تماماً تغيير البروفايل أو الاسم ولا تذكر الرولات إلا عند المنح أو السحب الحقيقي)
+// مراقبة تعديل رولات الأعضاء (تتجاهل تغيير البروفايل أو الاسم تماماً)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
 
-    // إذا لم تتغير الرولات أبداً (أي أن التعديل في الاسم أو الصورة فقط)، يتم تجاهل الأمر نهائياً
     if (oldMember.roles.cache.size === newMember.roles.cache.size && 
         oldMember.roles.cache.every(role => newMember.roles.cache.has(role.id))) {
         return;
@@ -898,9 +915,9 @@ client.on('interactionCreate', async interaction => {
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
                 .setDescription(
-                    `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !\n` +
+                    `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                     `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
-                    `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
+                    `## 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                     `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                     `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
                     `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
@@ -943,7 +960,7 @@ client.on('interactionCreate', async interaction => {
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
                 .setDescription(
-                    `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !\n` +
+                    `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                     `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
                     `## 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                     `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
