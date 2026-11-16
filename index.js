@@ -380,8 +380,7 @@ client.on('guildBanRemove', async ban => {
         .setColor('#00ff7f').setTimestamp();
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
-
-// نظام مراقبة تغيير ترتيب الرولات (رول واحد فقط المتحرك بدقة تامة)
+// نظام مراقبة تغيير ترتيب الرولات (محدث لضمان الإرسال 100%)
 client.on('roleUpdate', async (oldRole, newRole) => {
     if (oldRole.position === newRole.position) return;
 
@@ -389,13 +388,19 @@ client.on('roleUpdate', async (oldRole, newRole) => {
     const logChannel = guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
 
-    await wait(1500);
+    // زيادة وقت الانتظار قليلاً لضمان تسجيل الحدث في ديسكورد
+    await wait(2500);
+
     let executor = 'مشرف غير معروف';
     try {
-        const logs = await guild.fetchAuditLogs({ limit: 3, type: AuditLogEvent.RoleUpdate });
-        const entry = logs.entries.find(e => e.target?.id === newRole.id && (Date.now() - e.createdTimestamp < 15000));
-        if (entry?.executor) executor = `<@${entry.executor.id}>`;
-    } catch (e) {}
+        const logs = await guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.RoleUpdate });
+        const entry = logs.entries.find(e => e.target?.id === newRole.id && (Date.now() - e.createdTimestamp < 20000));
+        if (entry?.executor) {
+            executor = `<@${entry.executor.id}>`;
+        }
+    } catch (e) {
+        console.error('Error fetching audit logs for roleUpdate:', e);
+    }
 
     const sortedRoles = [...guild.roles.cache.values()].sort((a, b) => b.position - a.position);
     const oldIndex = sortedRoles.findIndex(r => r.id === oldRole.id) + 1;
@@ -413,8 +418,11 @@ client.on('roleUpdate', async (oldRole, newRole) => {
         .setColor('#3498db')
         .setTimestamp();
 
-    await logChannel.send({ embeds: [embed] }).catch(() => {});
+    await logChannel.send({ embeds: [embed] }).catch((err) => {
+        console.error('Failed to send roleUpdate log:', err);
+    });
 });
+
 
 client.on('channelUpdate', async (oldChannel, newChannel) => {
     if (!newChannel.guild) return;
