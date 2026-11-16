@@ -153,25 +153,21 @@ client.on('ready', async () => {
                         .setCustomId('ticket_menu')
                         .setPlaceholder('اختر خيار التذكرة...')
                         .addOptions([
-                            { label: 'NEED HELP', description: 'للمساعدة العامة والأوامر وقوانين السيرفر.', value: 'ticket_help', emoji: '❓' },
-                            { label: 'REPORTS', description: 'للإبلاغ عن المخالفات والمشاكل (بسرية تامة).', value: 'ticket_report', emoji: '🚨' },
-                            { label: 'PARTNERSHIP', description: 'لطلب الشراكات ونشر السيرفرات.', value: 'ticket_partner', emoji: '🤝' }
+                            { label: 'NEED HELP', description: 'للمساعدة العامة والاستفسارات وقوانين السيرفر', value: 'ticket_help', emoji: '❓' },
+                            { label: 'REPORTS', description: 'للإبلاغ عن المخالفات والمشاكل بسرية تامة', value: 'ticket_report', emoji: '🚨' },
+                            { label: 'PARTNERSHIP', description: 'لتقديم طلبات الشراكة ونشر السيرفرات', value: 'ticket_partner', emoji: '🤝' }
                         ]);
 
                     const row = new ActionRowBuilder().addComponents(selectMenu);
                     const ticketEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setTitle('الدعم الفني - 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓')
-                           .setDescription(
-‎        'مرحباً بك في مركز المساعدة لسيرفر **District**. يرجى اختيار القسم المناسب من القائمة بالأسفل لفتح تذكرة وسيتم الرد عليك في أسرع وقت ممكن.\n\n' +
-        '❓ **NEED HELP / المساعدة العامة والاستفسارات**\n' +
-‎        'للاستفسارات العامة، المساعدة في الأوامر، أو التعرف على قوانين السيرفر الأساسية.\n\n' +
-        '🚨 **REPORTS / الإبلاغات والشكاوى**\n' +
-‎        'للإبلاغ عن المخالفين، المشاكل، أو التجاوزات داخل السيرفر (تتم معالجتها بسرية تامة).\n\n' +
-        '🤝 **PARTNERSHIP / الشراكات ونشر السيرفرات**\n' +
-‎        'لتقديم طلبات الشراكة، التفاعل المتبادل، ونشر السيرفرات بين المجتمعات.\n\n' +
-‎        '📌 **ملاحظة:** يرجى عدم فتح تذكرة إلا عند الحاجة الفعلية لضمان تقديم أفضل خدمة للجميع.'
-    )
+                        .setDescription(
+                            'أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n' +
+                            '❓ **NEED HELP**\nللمساعدة العامة والاستفسارات وقوانين السيرفر.\n\n' +
+                            '🚨 **REPORTS**\nللإبلاغ عن المخالفات والمشاكل بسرية تامة.\n\n' +
+                            '🤝 **PARTNERSHIP**\nلتقديم طلبات الشراكة ونشر السيرفرات.'
+                        )
                         .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
 
                     await ticketChannel.send({ embeds: [ticketEmbed], components: [row] }).catch(() => {});
@@ -389,7 +385,8 @@ client.on('guildBanRemove', async ban => {
         .setColor('#00ff7f').setTimestamp();
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
-// نظام مراقبة تغيير ترتيب الرولات (محدث لضمان الإرسال 100%)
+
+// نظام مراقبة تغيير ترتيب الرولات (رول واحد فقط المتحرك بدقة تامة)
 client.on('roleUpdate', async (oldRole, newRole) => {
     if (oldRole.position === newRole.position) return;
 
@@ -397,19 +394,13 @@ client.on('roleUpdate', async (oldRole, newRole) => {
     const logChannel = guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
 
-    // زيادة وقت الانتظار قليلاً لضمان تسجيل الحدث في ديسكورد
-    await wait(2500);
-
+    await wait(2000);
     let executor = 'مشرف غير معروف';
     try {
         const logs = await guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.RoleUpdate });
         const entry = logs.entries.find(e => e.target?.id === newRole.id && (Date.now() - e.createdTimestamp < 20000));
-        if (entry?.executor) {
-            executor = `<@${entry.executor.id}>`;
-        }
-    } catch (e) {
-        console.error('Error fetching audit logs for roleUpdate:', e);
-    }
+        if (entry?.executor) executor = `<@${entry.executor.id}>`;
+    } catch (e) {}
 
     const sortedRoles = [...guild.roles.cache.values()].sort((a, b) => b.position - a.position);
     const oldIndex = sortedRoles.findIndex(r => r.id === oldRole.id) + 1;
@@ -427,11 +418,8 @@ client.on('roleUpdate', async (oldRole, newRole) => {
         .setColor('#3498db')
         .setTimestamp();
 
-    await logChannel.send({ embeds: [embed] }).catch((err) => {
-        console.error('Failed to send roleUpdate log:', err);
-    });
+    logChannel.send({ embeds: [embed] }).catch(() => {});
 });
-
 
 client.on('channelUpdate', async (oldChannel, newChannel) => {
     if (!newChannel.guild) return;
@@ -573,12 +561,11 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// مراقبة تعديل رولات الاعضاء (تمت إضافة حماية لعدم تفعيل اللوغ عند تغيير البروفايل أو الاسم)
+// مراقبة تعديل رولات الأعضاء وإرسال اللوغ بدقة تامة (تجاهل تغييرات البروفايل/الاسم)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
 
-    // إذا لم تتغير الرولات أبداً (تم تغيير الصورة أو الاسم فقط)، يتم التجاهل فوراً
     if (oldMember.roles.cache.size === newMember.roles.cache.size && 
         oldMember.roles.cache.every(role => newMember.roles.cache.has(role.id))) {
         return;
@@ -589,11 +576,11 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
     if (addedRoles.size > 0) {
         for (const role of addedRoles.values()) {
-            await wait(1000);
+            await wait(1500);
             let executor = 'مشرف غير معروف';
             try {
                 const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
-                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 10000));
+                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 15000));
                 if (entry?.executor) executor = `<@${entry.executor.id}>`;
             } catch (e) {}
 
@@ -607,11 +594,11 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
     if (removedRoles.size > 0) {
         for (const role of removedRoles.values()) {
-            await wait(1000);
+            await wait(1500);
             let executor = 'مشرف غير معروف';
             try {
                 const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
-                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 10000));
+                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 15000));
                 if (entry?.executor) executor = `<@${entry.executor.id}>`;
             } catch (e) {}
 
@@ -792,15 +779,20 @@ client.on('interactionCreate', async interaction => {
                 .setCustomId('ticket_menu')
                 .setPlaceholder('اختر خيار التذكرة...')
                 .addOptions([
-                    { label: 'NEED HELP', description: 'للمساعدة العامة والأوامر وقوانين السيرفر.', value: 'ticket_help', emoji: '❓' },
-                    { label: 'REPORTS', description: 'للإبلاغ عن المخالفات والمشاكل (بسرية تامة).', value: 'ticket_report', emoji: '🚨' },
-                    { label: 'PARTNERSHIP', description: 'لطلب الشراكات ونشر السيرفرات.', value: 'ticket_partner', emoji: '🤝' }
+                    { label: 'NEED HELP', description: 'للمساعدة العامة والاستفسارات وقوانين السيرفر', value: 'ticket_help', emoji: '❓' },
+                    { label: 'REPORTS', description: 'للإبلاغ عن المخالفات والمشاكل بسرية تامة', value: 'ticket_report', emoji: '🚨' },
+                    { label: 'PARTNERSHIP', description: 'لتقديم طلبات الشراكة ونشر السيرفرات', value: 'ticket_partner', emoji: '🤝' }
                 ]);
             const row = new ActionRowBuilder().addComponents(selectMenu);
             const embed = new EmbedBuilder()
                 .setColor('#2b2d31')
                 .setTitle('الدعم الفني - 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓')
-                .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.')
+                .setDescription(
+                    'أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n' +
+                    '❓ **NEED HELP**\nللمساعدة العامة والاستفسارات وقوانين السيرفر.\n\n' +
+                    '🚨 **REPORTS**\nللإبلاغ عن المخالفات والمشاكل بسرية تامة.\n\n' +
+                    '🤝 **PARTNERSHIP**\nلتقديم طلبات الشراكة ونشر السيرفرات.'
+                )
                 .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
             await interaction.editReply({ embeds: [embed], components: [row] });
         }
@@ -981,7 +973,7 @@ client.on('interactionCreate', async interaction => {
                 new ButtonBuilder().setCustomId('close_ticket').setLabel('Close 🔒').setStyle(ButtonStyle.Danger)
             );
 
-            const embed = new EmbedBuilder().setColor('#2b2d31').setTitle(`تذكرة جديدة: ${ticketName.toUpperCase()}`).setDescription(`مرحباً ${member}، تم فتح تذكرتك.`);
+            const embed = new EmbedBuilder().setColor('#2b2d31').setTitle(`تذكرة جديدة: ${ticketName.toUpperCase()}`).setDescription(`مرحباً ${member}، تم فتح تذكرتك وسيتم مساعدتك قريباً.`);
             await channel.send({ content: `${pingRoles} ${member}`, embeds: [embed], components: [ticketButtons] }).catch(() => {});
             await interaction.editReply({ content: `✅ تم إنشاء تذكرتك بنجاح: ${channel}` });
         } catch (err) {
