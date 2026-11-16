@@ -212,7 +212,7 @@ client.on('ready', async () => {
                     const gamesEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !\n` +
+                            `### 🎮 Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
                             `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
@@ -256,7 +256,7 @@ client.on('ready', async () => {
                     const clubEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !\n` +
+                            `### ⚽ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
                             `## 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                             `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
