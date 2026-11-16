@@ -381,7 +381,7 @@ client.on('guildBanRemove', async ban => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// نظام مراقبة تعديل وترتيب الرولات بدقة تامة (رول واحد فقط متحرك مع الترتيب الصحيح)
+// نظام مراقبة تغيير ترتيب الرولات (رول واحد فقط المتحرك بدقة تامة)
 client.on('roleUpdate', async (oldRole, newRole) => {
     if (oldRole.position === newRole.position) return;
 
@@ -397,15 +397,14 @@ client.on('roleUpdate', async (oldRole, newRole) => {
         if (entry?.executor) executor = `<@${entry.executor.id}>`;
     } catch (e) {}
 
-    // جلب قائمة الرولات مرتبة تصاعدياً حسب ديسكورد (1 هو الأعلى، والأكبر هو الأخير في الأسفل)
     const sortedRoles = [...guild.roles.cache.values()].sort((a, b) => b.position - a.position);
-    
-    // حساب الترتيب (الرقم 1 هو الأعلى في القائمة)
     const oldIndex = sortedRoles.findIndex(r => r.id === oldRole.id) + 1;
     const newIndex = sortedRoles.findIndex(r => r.id === newRole.id) + 1;
 
+    if (oldIndex === newIndex) return;
+
     const embed = new EmbedBuilder()
-        .setTitle('↕️ **Role Moved / تغيير مكان رول**')
+        .setTitle('↕️ **Role Position Updated / تغيير ترتيب رول**')
         .setDescription(
             `🏷️ **الرول المتحرك:** ${newRole}\n` +
             `📊 **من الترتيب:** \`${oldIndex}\` ➔ **إلى الترتيب:** \`${newIndex}\`\n\n` +
@@ -557,9 +556,16 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
+// مراقبة تعديل رولات الاعضاء (تمت إضافة حماية لعدم تفعيل اللوغ عند تغيير البروفايل أو الاسم)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
+
+    // إذا لم تتغير الرولات أبداً (تم تغيير الصورة أو الاسم فقط)، يتم التجاهل فوراً
+    if (oldMember.roles.cache.size === newMember.roles.cache.size && 
+        oldMember.roles.cache.every(role => newMember.roles.cache.has(role.id))) {
+        return;
+    }
 
     const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
     const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
