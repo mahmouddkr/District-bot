@@ -413,7 +413,7 @@ client.on('roleUpdate', async (oldRole, newRole) => {
         .setColor('#3498db')
         .setTimestamp();
 
-    logChannel.send({ embeds: [embed] }).catch(() => {});
+    await logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
 client.on('channelUpdate', async (oldChannel, newChannel) => {
