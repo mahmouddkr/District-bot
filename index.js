@@ -258,7 +258,7 @@ client.on('ready', async () => {
                         .setDescription(
                             `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !\n` +
                             `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
-                            `# 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
+                            `## 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                             `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
                             `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
                             `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
@@ -296,7 +296,7 @@ client.on('ready', async () => {
                         .setDescription(
                             `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر اهتماماتك المفضلة واحصل على رتبك تلقائيًا !\n\n` +
-                            `# 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
+                            `## 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
                             `<:Streamer:1571681414498488361> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.streamer}>\n` +
                             `<:Gamer:1571681755969229013> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gamer}>\n` +
                             `<:Football:1571683136495165500> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.football}>\n` +
@@ -945,7 +945,7 @@ client.on('interactionCreate', async interaction => {
                 .setDescription(
                     `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !\n` +
                     `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
-                    `# 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
+                    `## 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                     `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
                     `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
                     `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
@@ -984,7 +984,7 @@ client.on('interactionCreate', async interaction => {
                 .setDescription(
                     `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                     `### 🌹 اختر اهتماماتك المفضلة واحصل على رتبك تلقائيًا !\n\n` +
-                    `# 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
+                    `## 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
                     `<:Streamer:1571681414498488361> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.streamer}>\n` +
                     `<:Gamer:1571681755969229013> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gamer}>\n` +
                     `<:Football:1571683136495165500> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.football}>\n` +
