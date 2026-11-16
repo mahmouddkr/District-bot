@@ -257,8 +257,8 @@ client.on('ready', async () => {
                             `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ et récupère tes rôles !🎯🔥\n` +
                             `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !⚡️⚽️\n\n` +
                             `    ### 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
-                            `  **<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
-                            `  <:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` + **
+                            `  <:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
+                            `  <:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` + 
                             `  <:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
                             `  <:MCI:1571663050124038254> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mci}>\n` +
                             `  <:Arsenal:1571663557207265290> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.arsenal}>\n` +
