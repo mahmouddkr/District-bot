@@ -209,8 +209,8 @@ client.on('ready', async () => {
                     const gamesEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !🎯🔥\n` +
-                            `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !🎮⚡️\n\n` +
+                            `## 🎮 CHOISIS TES JEUX PRÉFÉRÉS !🎯🔥\n` +
+                            `## 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !🎮⚡️\n\n` +
                             `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                             `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
@@ -254,9 +254,9 @@ client.on('ready', async () => {
                     const clubEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !🎯🔥\n` +
-                            `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !⚡️⚽️\n\n` +
-                            ` 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
+                            `## ⚽ CHOISIS TON CLUB PRÉFÉRÉ !🎯🔥\n` +
+                            `## 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !⚡️⚽️\n\n` +
+                            `### 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                             `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
                             `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
                             `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
@@ -293,9 +293,9 @@ client.on('ready', async () => {
                     const hobbiesEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
-                            `### 🌹 اختر اهتماماتك المفضلة واحصل على رتبك تلقائيًا !⚡️\n\n` +
-                            `# 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
+                            `## ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
+                            `## 🌹 اختر اهتماماتك المفضلة واحصل على رتبك تلقائيًا !⚡️\n\n` +
+                            `### 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
                             `<:Streamer:1571681414498488361> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.streamer}>\n` +
                             `<:Gamer:1571681755969229013> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gamer}>\n` +
                             `<:Football:1571683136495165500> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.football}>\n` +
