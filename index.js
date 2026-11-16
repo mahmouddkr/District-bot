@@ -162,11 +162,10 @@ client.on('ready', async () => {
                     const ticketEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setTitle('الدعم الفني - 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓')
-                        .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.\n\n❓ **NEED HELP / الاستفسارات**\nللمساعدة العامة والأوامر وقوانين السيرفر.\n\n🚨 **REPORTS / الإبلاغات**\nللإبلاغ عن المخالفات والمشاكل (بسرية تامة).\n\n🤝 **PARTNERSHIP / الشراكات**\nلطلب الشراكات ونشر السيرفرات.\n\n📌 يرجى فتح التذكرة فقط عند الحاجة لضمان أسرع خدمة.')
+                        .setDescription('أهلاً بك في قسم الدعم لـ District. اختر القسم المناسب لفتح تذكرة وسيتم الرد عليك فوراً.')
                         .setImage('https://cdn.discordapp.com/attachments/1545845446172344422/1570914348078207006/IMG_1212.jpg?ex=6af8d37e&is=6af781fe&hm=c6b8b2cce5ecd32c1fab31c6b775a16d1592560222f0c9dbac5a8ec779304025&');
 
                     await ticketChannel.send({ embeds: [ticketEmbed], components: [row] }).catch(() => {});
-                    console.log('✅ تم إرسال لوحة التذاكر تلقائياً بنجاح.');
                 }
             }
 
@@ -182,9 +181,9 @@ client.on('ready', async () => {
                         .setTitle('🌟 أهلاً بك في سيرفر 🌹 𝐃𝐈𝐒𝐓𝐑𝐈𝐂𝐓 🌟')
                         .setDescription(
                             'مرحباً بك يا صديقي في مجتمعنا!\n\n' +
-                            '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك، حماية السيرفر، وفتح جميع القنوات والرتب.\n' +
-                            '🌌 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر لفتح الشات العام والتفاعل بحرية.\n' +
-                            '🎮 **Mini Games** : رول خاص بمحبي الألعاب للمشاركة في التحديات والفعاليات المصغرة\n\n' +
+                            '✅ **Verify** : زر التحقق الأساسي؛ اضغط عليه لتأكيد دخولك.\n' +
+                            '🌌 **Districtian** : الرول الرئيسي لكل أعضاء السيرفر.\n' +
+                            '🎮 **Mini Games** : رول خاص بمحبي الألعاب.\n\n' +
                             'اضغط على الأزرار بالأسفل لتبدأ معنا! 👇'
                         );
 
@@ -195,7 +194,6 @@ client.on('ready', async () => {
                     );
 
                     await staticRolesChannel.send({ embeds: [rolesEmbed], components: [rowRoles] }).catch(() => {});
-                    console.log('✅ تم إرسال لوحة الرتب الثابتة تلقائياً بنجاح.');
                 }
             }
 
@@ -209,8 +207,8 @@ client.on('ready', async () => {
                     const gamesEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### 🎮 Choisis tes jeux préférés et récupère tes rôles !🎯🔥\n` +
-                            `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !🎮⚡️\n\n` +
+                            `### 🎮 CHOISIS TES JEUX PRÉFÉRÉS !\n` +
+                            `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
                             `# 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
                             `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
@@ -240,7 +238,6 @@ client.on('ready', async () => {
                             await sentMsg.react(emId).catch(() => {});
                         }
                     }
-                    console.log('✅ تم إرسال لوحة رتب الألعاب تلقائياً بنجاح.');
                 }
             }
 
@@ -254,18 +251,18 @@ client.on('ready', async () => {
                     const clubEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### ⚽ Choisis tes jeux préférés et récupère tes rôles !🎯🔥\n` +
-                            `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !⚡️⚽️\n\n` +
-                            `    ### 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
-                            `  <:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
-                            `  <:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` + 
-                            `  <:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
-                            `  <:MCI:1571663050124038254> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mci}>\n` +
-                            `  <:Arsenal:1571663557207265290> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.arsenal}>\n` +
-                            `  <:Bayern_Munich:1571663424763461754> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.bayern}>\n` +
-                            `  <:MCA:1571659714188808282> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mca}>\n` +
-                            `  <:MCO:1571659571003392082> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mco}>\n` +
-                            `  <:USMA:1571659813442691173> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.usma}>`
+                            `### ⚽ CHOISIS TON CLUB PRÉFÉRÉ !\n` +
+                            `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
+                            `# 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
+                            `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
+                            `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
+                            `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
+                            `<:MCI:1571663050124038254> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mci}>\n` +
+                            `<:Arsenal:1571663557207265290> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.arsenal}>\n` +
+                            `<:Bayern_Munich:1571663424763461754> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.bayern}>\n` +
+                            `<:MCA:1571659714188808282> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mca}>\n` +
+                            `<:MCO:1571659571003392082> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mco}>\n` +
+                            `<:USMA:1571659813442691173> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.usma}>`
                         );
 
                     const sentClubMsg = await clubRolesChannel.send({ embeds: [clubEmbed] }).catch(() => {});
@@ -279,11 +276,10 @@ client.on('ready', async () => {
                             await sentClubMsg.react(emId).catch(() => {});
                         }
                     }
-                    console.log('✅ تم إرسال لوحة Club Roles بنجاح.');
                 }
             }
 
-            // 5. إرسال لوحة الهوايات (Hobbies Roles) الجديدة تلقائياً
+            // 5. إرسال لوحة الهوايات (Hobbies Roles)
             const hobbiesRolesChannel = guild.channels.cache.get(CHANNELS.HOBBIES_ROLES);
             if (hobbiesRolesChannel) {
                 const messages = await hobbiesRolesChannel.messages.fetch({ limit: 5 }).catch(() => null);
@@ -294,17 +290,17 @@ client.on('ready', async () => {
                         .setColor('#2b2d31')
                         .setDescription(
                             `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
-                            `### 🌹 اختر اهتماماتك المفضلة واحصل على رتبك تلقائيًا !⚡️\n\n` +
-                            `###    𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
-                            `  <:Streamer:1571681414498488361> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.streamer}>\n` +
-                            `  <:Gamer:1571681755969229013> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gamer}>\n` +
-                            `  <:Football:1571683136495165500> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.football}>\n` +
-                            `  <:Movie:1571682278030184519> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.movie}>\n` +
-                            `  <:Music:1571682535371706429> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.music}>\n` +
-                            `  <:Devloper:1571686904263348476> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.developer}>\n` +
-                            `  <:Gym:1571684136144605225> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gym}>\n` +
-                            `  <:Designer:1571686439706697738> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.designer}>\n` +
-                            `  <:Trading:1571685791472812163> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.trading}>`
+                            `### 🌹 اختر اهتماماتك المفضلة واحصل على رتبك تلقائيًا !\n\n` +
+                            `# 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
+                            `<:Streamer:1571681414498488361> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.streamer}>\n` +
+                            `<:Gamer:1571681755969229013> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gamer}>\n` +
+                            `<:Football:1571683136495165500> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.football}>\n` +
+                            `<:Movie:1571682278030184519> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.movie}>\n` +
+                            `<:Music:1571682535371706429> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.music}>\n` +
+                            `<:Devloper:1571686904263348476> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.developer}>\n` +
+                            `<:Gym:1571684136144605225> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gym}>\n` +
+                            `<:Designer:1571686439706697738> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.designer}>\n` +
+                            `<:Trading:1571685791472812163> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.trading}>`
                         );
 
                     const sentHobbiesMsg = await hobbiesRolesChannel.send({ embeds: [hobbiesEmbed] }).catch(() => {});
@@ -318,7 +314,6 @@ client.on('ready', async () => {
                             await sentHobbiesMsg.react(emId).catch(() => {});
                         }
                     }
-                    console.log('✅ تم إرسال لوحة Hobbies Roles بنجاح.');
                 }
             }
         } catch (e) {
@@ -346,7 +341,7 @@ client.on('ready', async () => {
 });
 
 // ==========================================
-// 1. نظام لوغ السيرفر والرتب وتعديل صلاحيات الرومات
+// 1. نظام لوغ السيرفر والرتب وتعديل وترتيب الرولات بدقة
 // ==========================================
 client.on('guildBanAdd', async ban => {
     const logChannel = ban.guild.channels.cache.get(CHANNELS.LOG);
@@ -386,7 +381,42 @@ client.on('guildBanRemove', async ban => {
     logChannel.send({ embeds: [embed] }).catch(() => {});
 });
 
-// مراقبة تعديل صلاحيات الرومات وتحديد المشرف والتفاصيل بدقة
+// نظام مراقبة تعديل وترتيب الرولات بدقة تامة (رول واحد فقط متحرك مع الترتيب الصحيح)
+client.on('roleUpdate', async (oldRole, newRole) => {
+    if (oldRole.position === newRole.position) return;
+
+    const guild = newRole.guild;
+    const logChannel = guild.channels.cache.get(CHANNELS.ROLES_LOG);
+    if (!logChannel) return;
+
+    await wait(1500);
+    let executor = 'مشرف غير معروف';
+    try {
+        const logs = await guild.fetchAuditLogs({ limit: 3, type: AuditLogEvent.RoleUpdate });
+        const entry = logs.entries.find(e => e.target?.id === newRole.id && (Date.now() - e.createdTimestamp < 15000));
+        if (entry?.executor) executor = `<@${entry.executor.id}>`;
+    } catch (e) {}
+
+    // جلب قائمة الرولات مرتبة تصاعدياً حسب ديسكورد (1 هو الأعلى، والأكبر هو الأخير في الأسفل)
+    const sortedRoles = [...guild.roles.cache.values()].sort((a, b) => b.position - a.position);
+    
+    // حساب الترتيب (الرقم 1 هو الأعلى في القائمة)
+    const oldIndex = sortedRoles.findIndex(r => r.id === oldRole.id) + 1;
+    const newIndex = sortedRoles.findIndex(r => r.id === newRole.id) + 1;
+
+    const embed = new EmbedBuilder()
+        .setTitle('↕️ **Role Moved / تغيير مكان رول**')
+        .setDescription(
+            `🏷️ **الرول المتحرك:** ${newRole}\n` +
+            `📊 **من الترتيب:** \`${oldIndex}\` ➔ **إلى الترتيب:** \`${newIndex}\`\n\n` +
+            `🛡️ **صاحب الفعل (By):** ${executor}`
+        )
+        .setColor('#3498db')
+        .setTimestamp();
+
+    logChannel.send({ embeds: [embed] }).catch(() => {});
+});
+
 client.on('channelUpdate', async (oldChannel, newChannel) => {
     if (!newChannel.guild) return;
     const logChannel = newChannel.guild.channels.cache.get(CHANNELS.LOG);
@@ -400,33 +430,30 @@ client.on('channelUpdate', async (oldChannel, newChannel) => {
         if (entry?.executor) executor = `<@${entry.executor.id}>`;
     } catch (e) {}
 
-    // التحقق هل التغيير في الصلاحيات (Permission Overwrites)
     const oldOverwrites = oldChannel.permissionOverwrites.cache;
     const newOverwrites = newChannel.permissionOverwrites.cache;
-
     let changesDescription = [];
 
     if (oldChannel.name !== newChannel.name) {
         changesDescription.push(`📌 **تغيير اسم الروم:** من \`${oldChannel.name}\` إلى \`${newChannel.name}\``);
     }
 
-    // مقارنة الأذونات للتأكد من الإضافة أو الإنقاص
     newOverwrites.forEach((newOv, id) => {
         const oldOv = oldOverwrites.get(id);
         const targetName = newOv.type === 0 ? `<@&${id}>` : `<@${id}>`;
 
         if (!oldOv) {
-            changesDescription.push(`➕ **إضافة صلاحيات لـ ${targetName}:** تم إنشاء إعدادات أذونات جديدة.`);
+            changesDescription.push(`➕ **إضافة صلاحيات لـ ${targetName}**`);
         } else {
             const addedAllow = newOv.allow.toArray().filter(p => !oldOv.allow.has(p));
             const removedAllow = oldOv.allow.toArray().filter(p => !newOv.allow.has(p));
             const addedDeny = newOv.deny.toArray().filter(p => !oldOv.deny.has(p));
             const removedDeny = oldOv.deny.toArray().filter(p => !newOv.deny.has(p));
 
-            if (addedAllow.length > 0) changesDescription.push(`✅ **السماح بصلاحيات (Added Allow) لـ ${targetName}:** \`${addedAllow.join(', ')}\``);
+            if (addedAllow.length > 0) changesDescription.push(`✅ **السماح بصلاحيات لـ ${targetName}:** \`${addedAllow.join(', ')}\``);
             if (removedAllow.length > 0) changesDescription.push(`❌ **إزالة صلاحيات السماح لـ ${targetName}:** \`${removedAllow.join(', ')}\``);
-            if (addedDeny.length > 0) changesDescription.push(`⛔ **منع صلاحيات (Added Deny) لـ ${targetName}:** \`${addedDeny.join(', ')}\``);
-            if (removedDeny.length > 0) changesDescription.push(`حرفي **إزالة المنع لـ ${targetName}:** \`${removedDeny.join(', ')}\``);
+            if (addedDeny.length > 0) changesDescription.push(`⛔ **منع صلاحيات لـ ${targetName}:** \`${addedDeny.join(', ')}\``);
+            if (removedDeny.length > 0) changesDescription.push(`🔄 **إزالة المنع لـ ${targetName}:** \`${removedDeny.join(', ')}\``);
         }
     });
 
@@ -434,7 +461,7 @@ client.on('channelUpdate', async (oldChannel, newChannel) => {
 
     const embed = new EmbedBuilder()
         .setTitle('🔐 **Channel Permissions Updated / تعديل صلاحيات روم**')
-        .setDescription(`📢 **الروم المعدل:** <#${newChannel.id}> (\`${newChannel.name}\`)\n🛡️ **صاحب الفعل (By):** ${executor}\n\n${changesDescription.join('\n')}`)
+        .setDescription(`📢 **الروم المعدل:** <#${newChannel.id}>\n🛡️ **صاحب الفعل (By):** ${executor}\n\n${changesDescription.join('\n')}`)
         .setColor('#00bcd4')
         .setTimestamp();
 
