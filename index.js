@@ -246,7 +246,7 @@ client.on('ready', async () => {
                 }
             }
 
-            // 4. إرسال لوحة أندية كرة القدم
+       // 4. إرسال لوحة أندية كرة القدم
             const clubRolesChannel = guild.channels.cache.get(CHANNELS.CLUB_ROLES);
             if (clubRolesChannel) {
                 const messages = await clubRolesChannel.messages.fetch({ limit: 5 }).catch(() => null);
@@ -259,15 +259,15 @@ client.on('ready', async () => {
                             `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
                             `## 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
-                            `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n\n` +
-                            `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n\n` +
-                            `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n\n` +
-                            `<:MCI:1571663050124038254> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mci}>\n\n` +
-                            `<:Arsenal:1571663557207265290> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.arsenal}>\n\n` 
-                            `<:Bayern_Munich:1571663424763461754> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.bayern}>\n\n` +
-                            `<:MCA:1571659714188808282> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mca}>\n\n` +
-                            `<:MCO:1571659571003392082> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mco}>\n\n` 
-                            `<:USMA:1571659813442691173> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.usma}>`
+                            `<@&${ROLES.CLUBS.rma}> <a:BLUE_Arrow:1571334227008421979> <:RMA:1571660508053114912>\n\n` +
+                            `<@&${ROLES.CLUBS.fcb}> <a:BLUE_Arrow:1571334227008421979> <:FCB:1571660548615966781>\n\n` +
+                            `<@&${ROLES.CLUBS.psg}> <a:BLUE_Arrow:1571334227008421979> <:PSG:1571659218761687232>\n\n` +
+                            `<@&${ROLES.CLUBS.mci}> <a:BLUE_Arrow:1571334227008421979> <:MCI:1571663050124038254>\n\n` +
+                            `<@&${ROLES.CLUBS.arsenal}> <a:BLUE_Arrow:1571334227008421979> <:Arsenal:1571663557207265290>\n\n` +
+                            `<@&${ROLES.CLUBS.bayern}> <a:BLUE_Arrow:1571334227008421979> <:Bayern_Munich:1571663424763461754>\n\n` +
+                            `<@&${ROLES.CLUBS.mca}> <a:BLUE_Arrow:1571334227008421979> <:MCA:1571659714188808282>\n\n` +
+                            `<@&${ROLES.CLUBS.mco}> <a:BLUE_Arrow:1571334227008421979> <:MCO:1571659571003392082>\n\n` +
+                            `<@&${ROLES.CLUBS.usma}> <a:BLUE_Arrow:1571334227008421979> <:USMA:1571659813442691173>`
                         );
 
                     const sentClubMsg = await clubRolesChannel.send({ embeds: [clubEmbed] }).catch(() => {});
@@ -284,6 +284,7 @@ client.on('ready', async () => {
                 }
             }
 
+            
             // 5. إرسال لوحة الهوايات (Hobbies Roles)
             const hobbiesRolesChannel = guild.channels.cache.get(CHANNELS.HOBBIES_ROLES);
             if (hobbiesRolesChannel) {
@@ -297,16 +298,17 @@ client.on('ready', async () => {
                             `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر اهتماماتك المفضلة واحصل على رتبك تلقائيًا !\n\n` +
                             `## 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
-                            `<:Streamer:1571681414498488361> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.streamer}>\n\n` +
-                            `<:Gamer:1571681755969229013> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gamer}>\n` 
-                            `<:Football:1571683136495165500> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.football}>\n\n` +
-                            `<:Movie:1571682278030184519> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.movie}>\n\n` +
-                            `<:Music:1571682535371706429> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.music}>\n\n` 
-                            `<:Devloper:1571686904263348476> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.developer}>\n\n` +
-                            `<:Gym:1571684136144605225> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gym}>\n\n` +
-                            `<:Designer:1571686439706697738> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.designer}>\n\n` +
-                            `<:Trading:1571685791472812163> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.trading}>`
+                            `<@&${ROLES.HOBBIES.streamer}> <a:BLUE_Arrow:1571334227008421979> <:Streamer:1571681414498488361>\n\n` +
+                            `<@&${ROLES.HOBBIES.gamer}> <a:BLUE_Arrow:1571334227008421979> <:Gamer:1571681755969229013>\n\n` +
+                            `<@&${ROLES.HOBBIES.football}> <a:BLUE_Arrow:1571334227008421979> <:Football:1571683136495165500>\n\n` +
+                            `<@&${ROLES.HOBBIES.movie}> <a:BLUE_Arrow:1571334227008421979> <:Movie:1571682278030184519>\n\n` +
+                            `<@&${ROLES.HOBBIES.music}> <a:BLUE_Arrow:1571334227008421979> <:Music:1571682535371706429>\n\n` +
+                            `<@&${ROLES.HOBBIES.developer}> <a:BLUE_Arrow:1571334227008421979> <:Devloper:1571686904263348476>\n\n` +
+                            `<@&${ROLES.HOBBIES.gym}> <a:BLUE_Arrow:1571334227008421979> <:Gym:1571684136144605225>\n\n` +
+                            `<@&${ROLES.HOBBIES.designer}> <a:BLUE_Arrow:1571334227008421979> <:Designer:1571686439706697738>\n\n` +
+                            `<@&${ROLES.HOBBIES.trading}> <a:BLUE_Arrow:1571334227008421979> <:Trading:1571685791472812163>`
                         );
+
 
                     const sentHobbiesMsg = await hobbiesRolesChannel.send({ embeds: [hobbiesEmbed] }).catch(() => {});
                     if (sentHobbiesMsg) {
