@@ -202,7 +202,7 @@ client.on('ready', async () => {
                 }
             }
 
-            // 3. إرسال لوحة رتب الألعاب
+           // 3. إرسال لوحة رتب الألعاب
             const gamesRolesChannel = guild.channels.cache.get(CHANNELS.GAMES_ROLES);
             if (gamesRolesChannel) {
                 const messages = await gamesRolesChannel.messages.fetch({ limit: 5 }).catch(() => null);
@@ -215,20 +215,21 @@ client.on('ready', async () => {
                             `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
                             `## 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
-                            `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
-                            `<:Valorant:1571567223259271319> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.valo}>\n` +
-                            `<:emoji_6:1571337470816165968> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fortnite}>\n` +
-                            `<:Free_Fire:1571338358452519034> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fire}>\n` +
-                            `<:RocketLeague:1571339257149263872> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.rocket}>\n` +
-                            `<:Amongus:1571565515535814819> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.amongus}>\n` +
-                            `<:emoji_12:1571562285267419337> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.minecraft}>\n` +
-                            `<:Roblox:1571566690062442671> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.roblox}>\n` +
-                            `<:EaSportFc:1571568452232024155> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.soccer}>\n` +
-                            `<:Asseto_Corsa:1571567502343798905> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.bluecar}>\n` +
-                            `<:emoji_12:1571566973022638230> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.pes}>\n` +
-                            `<:Forza_Horizon:1571568011859468328> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.racecar}>\n` +
-                            `<:Fivem:1571598558422110331> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.fivem}>`
+                            `<@&${ROLES.GAMES.cs2}> <a:BLUE_Arrow:1571334227008421979> <:CS2:1571567392373346405>\n\n` +
+                            `<@&${ROLES.GAMES.valo}> <a:BLUE_Arrow:1571334227008421979> <:Valorant:1571567223259271319>\n\n` +
+                            `<@&${ROLES.GAMES.fortnite}> <a:BLUE_Arrow:1571334227008421979> <:emoji_6:1571337470816165968>\n\n` +
+                            `<@&${ROLES.GAMES.fire}> <a:BLUE_Arrow:1571334227008421979> <:Free_Fire:1571338358452519034>\n\n` +
+                            `<@&${ROLES.GAMES.rocket}> <a:BLUE_Arrow:1571334227008421979> <:RocketLeague:1571339257149263872>\n\n` +
+                            `<@&${ROLES.GAMES.amongus}> <a:BLUE_Arrow:1571334227008421979> <:Amongus:1571565515535814819>\n\n` +
+                            `<@&${ROLES.GAMES.minecraft}> <a:BLUE_Arrow:1571334227008421979> <:emoji_12:1571562285267419337>\n\n` +
+                            `<@&${ROLES.GAMES.roblox}> <a:BLUE_Arrow:1571334227008421979> <:Roblox:1571566690062442671>\n\n` +
+                            `<@&${ROLES.GAMES.soccer}> <a:BLUE_Arrow:1571334227008421979> <:EaSportFc:1571568452232024155>\n\n` +
+                            `<@&${ROLES.GAMES.bluecar}> <a:BLUE_Arrow:1571334227008421979> <:Asseto_Corsa:1571567502343798905>\n\n` +
+                            `<@&${ROLES.GAMES.pes}> <a:BLUE_Arrow:1571334227008421979> <:emoji_12:1571566973022638230>\n\n` +
+                            `<@&${ROLES.GAMES.racecar}> <a:BLUE_Arrow:1571334227008421979> <:Forza_Horizon:1571568011859468328>\n\n` +
+                            `<@&${ROLES.GAMES.fivem}> <a:BLUE_Arrow:1571334227008421979> <:Fivem:1571598558422110331>`
                         );
+
 
                     const sentMsg = await gamesRolesChannel.send({ embeds: [gamesEmbed] }).catch(() => {});
                     if (sentMsg) {
