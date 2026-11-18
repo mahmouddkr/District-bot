@@ -212,7 +212,7 @@ client.on('ready', async () => {
                     const gamesEmbed = new EmbedBuilder()
                         .setColor('#2b2d31')
                         .setDescription(
-                            `### 🎮 Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
+                            `### ✨ Choisis tes centres d’intérêt et récupère tes rôles ! 🎯🔥\n` +
                             `### 🌹 اختر ألعابك المفضلة واحصل على رتبها تلقائيًا !\n\n` +
                             `## 𝑮𝑨𝑴𝑬𝑺 🌑\n\n` +
                             `<:CS2:1571567392373346405> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.GAMES.cs2}>\n` +
@@ -260,13 +260,21 @@ client.on('ready', async () => {
                             `### 🌹 اختر ناديك المفضل واحصل على رتبته تلقائيًا !\n\n` +
                             `## 𝐂𝐋𝐔𝐁𝐒 🌍\n\n` +
                             `<:RMA:1571660508053114912> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.rma}>\n` +
+                            
                             `<:FCB:1571660548615966781> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.fcb}>\n` +
+                            
                             `<:PSG:1571659218761687232> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.psg}>\n` +
+                            
                             `<:MCI:1571663050124038254> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mci}>\n` +
+                            
                             `<:Arsenal:1571663557207265290> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.arsenal}>\n` +
+                            
                             `<:Bayern_Munich:1571663424763461754> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.bayern}>\n` +
+                            
                             `<:MCA:1571659714188808282> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mca}>\n` +
+                            
                             `<:MCO:1571659571003392082> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.mco}>\n` +
+                            
                             `<:USMA:1571659813442691173> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.CLUBS.usma}>`
                         );
 
@@ -298,13 +306,21 @@ client.on('ready', async () => {
                             `### 🌹 اختر اهتماماتك المفضلة واحصل على رتبك تلقائيًا !\n\n` +
                             `## 𝐇𝐎𝐁𝐁𝐈𝐄𝐒 ⭐\n\n` +
                             `<:Streamer:1571681414498488361> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.streamer}>\n` +
+                            
                             `<:Gamer:1571681755969229013> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gamer}>\n` +
+                            
                             `<:Football:1571683136495165500> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.football}>\n` +
+                            
                             `<:Movie:1571682278030184519> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.movie}>\n` +
+                            
                             `<:Music:1571682535371706429> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.music}>\n` +
+                            
                             `<:Devloper:1571686904263348476> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.developer}>\n` +
+                            
                             `<:Gym:1571684136144605225> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.gym}>\n` +
+                            
                             `<:Designer:1571686439706697738> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.designer}>\n` +
+                            
                             `<:Trading:1571685791472812163> <a:BLUE_Arrow:1571334227008421979> <@&${ROLES.HOBBIES.trading}>`
                         );
 
@@ -643,51 +659,62 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     }
 });
 
-// مراقبة تعديل رولات الأعضاء (تتجاهل تغيير البروفايل أو الاسم تماماً)
+// مراقبة تعديل رولات الأعضاء (تتجاهل تماماً البروفايل، الاسم، أو الديكور ولا تسجل إلا الإزالة أو الإضافة الحقيقية)
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const logChannel = newMember.guild.channels.cache.get(CHANNELS.ROLES_LOG);
     if (!logChannel) return;
 
-    if (oldMember.roles.cache.size === newMember.roles.cache.size && 
-        oldMember.roles.cache.every(role => newMember.roles.cache.has(role.id))) {
+    const oldRoles = oldMember.roles.cache;
+    const newRoles = newMember.roles.cache;
+
+    // إذا لم تتغير أيدي الرولات مطلقاً (أي تم تغيير الصورة أو الاسم أو البوستر فقط)، يتم الخروج فوراً
+    if (oldRoles.size === newRoles.size && oldRoles.every(role => newRoles.has(role.id))) {
         return;
     }
 
-    const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
-    const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
+    const addedRoles = newRoles.filter(role => !oldRoles.has(role.id));
+    const removedRoles = oldRoles.filter(role => !newRoles.has(role.id));
+
+    if (addedRoles.size === 0 && removedRoles.size === 0) return;
 
     if (addedRoles.size > 0) {
         for (const role of addedRoles.values()) {
-            await wait(1500);
+            await wait(2000);
             let executor = 'مشرف غير معروف';
             try {
                 const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
-                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 15000));
-                if (entry?.executor) executor = `<@${entry.executor.id}>`;
+                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 20000));
+                if (entry?.executor) {
+                    executor = `<@${entry.executor.id}>`;
+                }
             } catch (e) {}
 
             const embed = new EmbedBuilder()
                 .setTitle('➕ **Role Added / منح رتبة لعضو**')
                 .setDescription(`👤 **العضو:** <@${newMember.id}>\n🏷️ **الرول المضاف:** ${role}\n🛡️ **صاحب الفعل (By):** ${executor}`)
-                .setColor('#00ff00').setTimestamp();
+                .setColor('#00ff00')
+                .setTimestamp();
             await logChannel.send({ embeds: [embed] }).catch(() => {});
         }
     }
 
     if (removedRoles.size > 0) {
         for (const role of removedRoles.values()) {
-            await wait(1500);
+            await wait(2000);
             let executor = 'مشرف غير معروف';
             try {
                 const logs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate });
-                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 15000));
-                if (entry?.executor) executor = `<@${entry.executor.id}>`;
+                const entry = logs.entries.find(e => e.target.id === newMember.id && (Date.now() - e.createdTimestamp < 20000));
+                if (entry?.executor) {
+                    executor = `<@${entry.executor.id}>`;
+                }
             } catch (e) {}
 
             const embed = new EmbedBuilder()
                 .setTitle('➖ **Role Removed / نزع رول من عضو**')
                 .setDescription(`👤 **العضو:** <@${newMember.id}>\n🏷️ **الرول المنزوع:** ${role}\n🛡️ **صاحب الفعل (By):** ${executor}`)
-                .setColor('#ff0000').setTimestamp();
+                .setColor('#ff0000')
+                .setTimestamp();
             await logChannel.send({ embeds: [embed] }).catch(() => {});
         }
     }
